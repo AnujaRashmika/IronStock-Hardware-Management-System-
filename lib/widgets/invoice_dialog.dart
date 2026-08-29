@@ -21,6 +21,10 @@ class InvoiceDialog extends StatefulWidget {
 class _InvoiceDialogState extends State<InvoiceDialog> {
   bool _isThermalView = true;
 
+  String _formatCurrency(double amount) {
+    return '${widget.shopSettings.currency} ${amount.toStringAsFixed(2)}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -147,8 +151,8 @@ class _InvoiceDialogState extends State<InvoiceDialog> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('  ${item.quantity.toStringAsFixed(1)} ${item.unit} x ${item.unitPrice.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11)),
-                      Text('Rs. ${item.total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      Text('  ${item.quantity.toStringAsFixed(1)} ${item.unit} x ${_formatCurrency(item.unitPrice)}', style: const TextStyle(fontSize: 11)),
+                      Text(_formatCurrency(item.total), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
@@ -166,7 +170,7 @@ class _InvoiceDialogState extends State<InvoiceDialog> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text('GRAND TOTAL:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            Text('Rs. ${widget.sale.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            Text(_formatCurrency(widget.sale.totalAmount), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           ],
         ),
         _buildThermalLine('Paid Amount:', widget.sale.paidAmount),
@@ -196,7 +200,7 @@ class _InvoiceDialogState extends State<InvoiceDialog> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(fontSize: 11, fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
-          Text('Rs. ${amount.toStringAsFixed(2)}', style: TextStyle(fontSize: 11, fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
+          Text(_formatCurrency(amount), style: TextStyle(fontSize: 11, fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
         ],
       ),
     );
@@ -276,13 +280,13 @@ class _InvoiceDialogState extends State<InvoiceDialog> {
           children: [
             TableRow(
               decoration: BoxDecoration(color: Colors.grey.shade100),
-              children: const [
-                Padding(padding: EdgeInsets.all(8), child: Text('#', style: TextStyle(fontWeight: FontWeight.bold))),
-                Padding(padding: EdgeInsets.all(8), child: Text('Item Description', style: TextStyle(fontWeight: FontWeight.bold))),
-                Padding(padding: EdgeInsets.all(8), child: Text('Unit', style: TextStyle(fontWeight: FontWeight.bold))),
-                Padding(padding: EdgeInsets.all(8), child: Text('Qty', style: TextStyle(fontWeight: FontWeight.bold))),
-                Padding(padding: EdgeInsets.all(8), child: Text('Price', style: TextStyle(fontWeight: FontWeight.bold))),
-                Padding(padding: EdgeInsets.all(8), child: Text('Total (Rs.)', style: TextStyle(fontWeight: FontWeight.bold))),
+              children: [
+                const Padding(padding: EdgeInsets.all(8), child: Text('#', style: TextStyle(fontWeight: FontWeight.bold))),
+                const Padding(padding: EdgeInsets.all(8), child: Text('Item Description', style: TextStyle(fontWeight: FontWeight.bold))),
+                const Padding(padding: EdgeInsets.all(8), child: Text('Unit', style: TextStyle(fontWeight: FontWeight.bold))),
+                const Padding(padding: EdgeInsets.all(8), child: Text('Qty', style: TextStyle(fontWeight: FontWeight.bold))),
+                const Padding(padding: EdgeInsets.all(8), child: Text('Price', style: TextStyle(fontWeight: FontWeight.bold))),
+                Padding(padding: const EdgeInsets.all(8), child: Text('Total (${widget.shopSettings.currency})', style: const TextStyle(fontWeight: FontWeight.bold))),
               ],
             ),
             ...widget.sale.items.asMap().entries.map((entry) {
@@ -294,8 +298,8 @@ class _InvoiceDialogState extends State<InvoiceDialog> {
                   Padding(padding: const EdgeInsets.all(8), child: Text(item.productName)),
                   Padding(padding: const EdgeInsets.all(8), child: Text(item.unit)),
                   Padding(padding: const EdgeInsets.all(8), child: Text(item.quantity.toStringAsFixed(1))),
-                  Padding(padding: const EdgeInsets.all(8), child: Text(item.unitPrice.toStringAsFixed(2))),
-                  Padding(padding: const EdgeInsets.all(8), child: Text(item.total.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold))),
+                  Padding(padding: const EdgeInsets.all(8), child: Text(_formatCurrency(item.unitPrice))),
+                  Padding(padding: const EdgeInsets.all(8), child: Text(_formatCurrency(item.total), style: const TextStyle(fontWeight: FontWeight.bold))),
                 ],
               );
             }),
@@ -312,14 +316,14 @@ class _InvoiceDialogState extends State<InvoiceDialog> {
               width: 300,
               child: Column(
                 children: [
-                  _buildSummaryRow('Subtotal', 'Rs. ${widget.sale.subtotal.toStringAsFixed(2)}'),
-                  if (widget.sale.discount > 0) _buildSummaryRow('Discount', '- Rs. ${widget.sale.discount.toStringAsFixed(2)}'),
-                  if (widget.sale.deliveryCharge > 0) _buildSummaryRow('Delivery Charge', 'Rs. ${widget.sale.deliveryCharge.toStringAsFixed(2)}'),
+                  _buildSummaryRow('Subtotal', _formatCurrency(widget.sale.subtotal)),
+                  if (widget.sale.discount > 0) _buildSummaryRow('Discount', '- ${_formatCurrency(widget.sale.discount)}'),
+                  if (widget.sale.deliveryCharge > 0) _buildSummaryRow('Delivery Charge', _formatCurrency(widget.sale.deliveryCharge)),
                   const Divider(),
-                  _buildSummaryRow('Grand Total', 'Rs. ${widget.sale.totalAmount.toStringAsFixed(2)}', isBold: true),
-                  _buildSummaryRow('Paid Amount', 'Rs. ${widget.sale.paidAmount.toStringAsFixed(2)}'),
+                  _buildSummaryRow('Grand Total', _formatCurrency(widget.sale.totalAmount), isBold: true),
+                  _buildSummaryRow('Paid Amount', _formatCurrency(widget.sale.paidAmount)),
                   if (widget.sale.creditAmount > 0)
-                    _buildSummaryRow('Outstanding Balance', 'Rs. ${widget.sale.creditAmount.toStringAsFixed(2)}', isBold: true, color: Colors.red),
+                    _buildSummaryRow('Outstanding Balance', _formatCurrency(widget.sale.creditAmount), isBold: true, color: Colors.red),
                 ],
               ),
             ),

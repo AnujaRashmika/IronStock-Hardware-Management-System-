@@ -155,7 +155,7 @@ class _PosScreenState extends State<PosScreen> {
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
-                                          'Rs. ${prod.sellingPrice.toStringAsFixed(2)}',
+                                          provider.formatCurrency(prod.sellingPrice),
                                           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 13),
                                         ),
                                         Text(
@@ -230,7 +230,7 @@ class _PosScreenState extends State<PosScreen> {
                       children: [
                         Expanded(flex: 3, child: Text('Item', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
                         Expanded(flex: 2, child: Text('Qty / Price', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                        Expanded(flex: 2, child: Text('Total (Rs.)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                        Expanded(flex: 2, child: Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
                         SizedBox(width: 30),
                       ],
                     ),
@@ -265,7 +265,7 @@ class _PosScreenState extends State<PosScreen> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(item.product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                                          Text('${item.product.unit} | Rs. ${item.unitPrice.toStringAsFixed(2)}', style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                                          Text('${item.product.unit} | ${provider.formatCurrency(item.unitPrice)}', style: const TextStyle(fontSize: 10, color: Colors.grey)),
                                         ],
                                       ),
                                     ),
@@ -294,7 +294,7 @@ class _PosScreenState extends State<PosScreen> {
                                     Expanded(
                                       flex: 2,
                                       child: Text(
-                                        item.total.toStringAsFixed(2),
+                                        provider.formatCurrency(item.total),
                                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                                       ),
                                     ),
@@ -318,7 +318,7 @@ class _PosScreenState extends State<PosScreen> {
                     ),
                     child: Column(
                       children: [
-                        _buildCartSummaryRow('Subtotal:', 'Rs. ${provider.cartSubtotal.toStringAsFixed(2)}'),
+                        _buildCartSummaryRow('Subtotal:', provider.formatCurrency(provider.cartSubtotal)),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -368,7 +368,7 @@ class _PosScreenState extends State<PosScreen> {
                           children: [
                             const Text('GRAND TOTAL:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                             Text(
-                              'Rs. ${provider.cartTotal.toStringAsFixed(2)}',
+                              provider.formatCurrency(provider.cartTotal),
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.orange),
                             ),
                           ],
@@ -501,7 +501,7 @@ class _PosScreenState extends State<PosScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text('Total Amount Due:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          Text('Rs. ${provider.cartTotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange)),
+                          Text(provider.formatCurrency(provider.cartTotal), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange)),
                         ],
                       ),
                     ),
@@ -538,9 +538,9 @@ class _PosScreenState extends State<PosScreen> {
                     TextField(
                       controller: paidController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        prefixText: 'Rs. ',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        prefixText: '${provider.currency} ',
+                        border: const OutlineInputBorder(),
                       ),
                       onChanged: (_) => setModalState(() {}),
                     ),
@@ -548,12 +548,12 @@ class _PosScreenState extends State<PosScreen> {
 
                     if (changeOrCredit >= 0)
                       Text(
-                        'Change Due to Customer: Rs. ${changeOrCredit.toStringAsFixed(2)}',
+                        'Change Due to Customer: ${provider.formatCurrency(changeOrCredit)}',
                         style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 14),
                       )
                     else
                       Text(
-                        'Outstanding Credit Added: Rs. ${(-changeOrCredit).toStringAsFixed(2)}',
+                        'Outstanding Credit Added: ${provider.formatCurrency(-changeOrCredit)}',
                         style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.purple, fontSize: 14),
                       ),
                   ],

@@ -31,7 +31,7 @@ class DashboardScreen extends StatelessWidget {
               Expanded(
                 child: _buildMetricCard(
                   title: "Today's Sales",
-                  amount: 'Rs. ${todaySales.toStringAsFixed(2)}',
+                  amount: provider.formatCurrency(todaySales),
                   icon: Icons.payments_rounded,
                   color: Colors.blue,
                   subtitle: '${provider.sales.where((s) => _isToday(s.date)).length} transactions today',
@@ -41,7 +41,7 @@ class DashboardScreen extends StatelessWidget {
               Expanded(
                 child: _buildMetricCard(
                   title: "Today's Purchases",
-                  amount: 'Rs. ${todayPurchases.toStringAsFixed(2)}',
+                  amount: provider.formatCurrency(todayPurchases),
                   icon: Icons.shopping_bag_rounded,
                   color: Colors.orange,
                   subtitle: '${provider.purchases.where((p) => _isToday(p.date)).length} purchases today',
@@ -51,7 +51,7 @@ class DashboardScreen extends StatelessWidget {
               Expanded(
                 child: _buildMetricCard(
                   title: "Today's Net Profit",
-                  amount: 'Rs. ${todayProfit.toStringAsFixed(2)}',
+                  amount: provider.formatCurrency(todayProfit),
                   icon: Icons.trending_up_rounded,
                   color: todayProfit >= 0 ? Colors.green : Colors.red,
                   subtitle: 'Sales Margin - Expenses',
@@ -61,7 +61,7 @@ class DashboardScreen extends StatelessWidget {
               Expanded(
                 child: _buildMetricCard(
                   title: 'Pending Customer Credit',
-                  amount: 'Rs. ${customerCredit.toStringAsFixed(2)}',
+                  amount: provider.formatCurrency(customerCredit),
                   icon: Icons.account_balance_wallet_rounded,
                   color: Colors.purple,
                   subtitle: 'Total outstanding receivable',
@@ -153,7 +153,7 @@ class DashboardScreen extends StatelessWidget {
                                     Padding(padding: EdgeInsets.all(8), child: Text('Invoice #', style: TextStyle(fontWeight: FontWeight.bold))),
                                     Padding(padding: EdgeInsets.all(8), child: Text('Customer', style: TextStyle(fontWeight: FontWeight.bold))),
                                     Padding(padding: EdgeInsets.all(8), child: Text('Payment', style: TextStyle(fontWeight: FontWeight.bold))),
-                                    Padding(padding: EdgeInsets.all(8), child: Text('Total (Rs.)', style: TextStyle(fontWeight: FontWeight.bold))),
+                                    Padding(padding: EdgeInsets.all(8), child: Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
                                     Padding(padding: EdgeInsets.all(8), child: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
                                   ],
                                 ),
@@ -163,7 +163,7 @@ class DashboardScreen extends StatelessWidget {
                                         Padding(padding: const EdgeInsets.all(8), child: Text(sale.invoiceNo, style: const TextStyle(fontWeight: FontWeight.w500))),
                                         Padding(padding: const EdgeInsets.all(8), child: Text(sale.customerName)),
                                         Padding(padding: const EdgeInsets.all(8), child: Text(sale.primaryPaymentMethod)),
-                                        Padding(padding: const EdgeInsets.all(8), child: Text(sale.totalAmount.toStringAsFixed(2), style: const TextStyle(fontWeight: FontWeight.bold))),
+                                        Padding(padding: const EdgeInsets.all(8), child: Text(provider.formatCurrency(sale.totalAmount), style: const TextStyle(fontWeight: FontWeight.bold))),
                                         Padding(
                                           padding: const EdgeInsets.all(8),
                                           child: Container(
@@ -297,7 +297,7 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ),
                           title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                          subtitle: Text('Price: Rs. ${p.sellingPrice.toStringAsFixed(2)} / ${p.unit}'),
+                          subtitle: Text('Price: ${provider.formatCurrency(p.sellingPrice)} / ${p.unit}'),
                           trailing: Text(
                             '${p.currentStock.toStringAsFixed(0)} ${p.unit}',
                             style: const TextStyle(fontWeight: FontWeight.bold),

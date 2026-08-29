@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../database/db_helper.dart';
 import '../models/product.dart';
@@ -123,6 +124,11 @@ class AppProvider extends ChangeNotifier {
   List<User> get users => _users;
   List<AuditLog> get auditLogs => _auditLogs;
   ShopSettings get shopSettings => _shopSettings;
+
+  // Currency Getters & Formatters
+  String get currency => _shopSettings.currency;
+  String formatCurrency(double amount) => '$currency ${NumberFormat('#,##0.00').format(amount)}';
+  String formatAmount(double amount) => NumberFormat('#,##0.00').format(amount);
 
   List<CartItem> get cart => _cart;
   Customer get selectedCustomer => _selectedCustomer;
@@ -505,7 +511,7 @@ class AppProvider extends ChangeNotifier {
 
     _sales.insert(0, sale);
     await _db.insert('sales', sale.toMap());
-    await addAuditLog('Create Sale', 'Completed sale invoice $invoiceNo for ${customer.name} total Rs. $total', reference: invoiceNo);
+    await addAuditLog('Create Sale', 'Completed sale invoice $invoiceNo for ${customer.name} total $currency $total', reference: invoiceNo);
 
     // Create delivery if delivery charge > 0 or requested
     if (delCharge > 0) {
@@ -678,7 +684,7 @@ class AppProvider extends ChangeNotifier {
 
     _purchases.insert(0, purchase);
     await _db.insert('purchases', purchase.toMap());
-    await addAuditLog('Create Purchase', 'Purchased goods from ${supplier.name} for Rs. $total', reference: purNo);
+    await addAuditLog('Create Purchase', 'Purchased goods from ${supplier.name} for $currency $total', reference: purNo);
     notifyListeners();
   }
 
@@ -783,7 +789,7 @@ class AppProvider extends ChangeNotifier {
 
     _customerPayments.insert(0, pay);
     await _db.insert('customer_payments', pay.toMap());
-    await addAuditLog('Customer Payment', 'Received payment Rs. $amount from ${customer.name}', reference: pay.id);
+    await addAuditLog('Customer Payment', 'Received payment $currency $amount from ${customer.name}', reference: pay.id);
     notifyListeners();
   }
 
@@ -826,7 +832,7 @@ class AppProvider extends ChangeNotifier {
 
     _supplierPayments.insert(0, pay);
     await _db.insert('supplier_payments', pay.toMap());
-    await addAuditLog('Supplier Payment', 'Paid Rs. $amount to supplier ${supplier.name}', reference: pay.id);
+    await addAuditLog('Supplier Payment', 'Paid $currency $amount to supplier ${supplier.name}', reference: pay.id);
     notifyListeners();
   }
 
@@ -900,7 +906,7 @@ class AppProvider extends ChangeNotifier {
 
     await _db.insert('sales_returns', salesReturn.toMap());
     await _db.insert('refund_records', refund.toMap());
-    await addAuditLog('Sales Return', 'Processed return $retNo for invoice $invoiceNo total Rs. $total', reference: retNo);
+    await addAuditLog('Sales Return', 'Processed return $retNo for invoice $invoiceNo total $currency $total', reference: retNo);
 
     notifyListeners();
   }
@@ -1039,7 +1045,7 @@ class AppProvider extends ChangeNotifier {
 
     _expenses.insert(0, exp);
     await _db.insert('expenses', exp.toMap());
-    await addAuditLog('Add Expense', 'Recorded expense $categoryName of Rs. $amount ($description)', reference: exp.id);
+    await addAuditLog('Add Expense', 'Recorded expense $categoryName of $currency $amount ($description)', reference: exp.id);
     notifyListeners();
   }
 
@@ -1047,7 +1053,7 @@ class AppProvider extends ChangeNotifier {
     final exp = _expenses.firstWhere((e) => e.id == id, orElse: () => Expense(id: '', categoryName: '', description: '', amount: 0, date: DateTime.now()));
     _expenses.removeWhere((e) => e.id == id);
     await _db.delete('expenses', 'id', id);
-    await addAuditLog('Delete Expense', 'Deleted expense ${exp.categoryName} Rs. ${exp.amount}', reference: id);
+    await addAuditLog('Delete Expense', 'Deleted expense ${exp.categoryName} $currency ${exp.amount}', reference: id);
     notifyListeners();
   }
 
@@ -1096,7 +1102,7 @@ class AppProvider extends ChangeNotifier {
 
     _dayClosings.insert(0, dc);
     await _db.insert('day_closings', dc.toMap());
-    await addAuditLog('Day Closing', 'Performed cashier cash closing. Expected Rs. $expectedCash, Actual Rs. $actualCash (Diff: Rs. $diff)', reference: dc.id);
+    await addAuditLog('Day Closing', 'Performed cashier cash closing. Expected $currency $expectedCash, Actual $currency $actualCash (Diff: $currency $diff)', reference: dc.id);
 
     notifyListeners();
     return dc;
