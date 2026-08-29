@@ -148,7 +148,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Customer Name *', border: OutlineInputBorder())),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: type,
+                initialValue: type,
                 decoration: const InputDecoration(labelText: 'Customer Type', border: OutlineInputBorder()),
                 items: ['Walk-in', 'Regular', 'Contractor', 'Company', 'Builder'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                 onChanged: (val) {

@@ -53,7 +53,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
                   title: const Text('Automatic Daily Backup on Application Exit', style: TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: const Text('Saves daily snapshots to the local Backups folder.'),
                   value: _autoBackup,
-                  activeColor: Colors.orange,
+                  activeThumbColor: Colors.orange,
                   onChanged: (val) {
                     setState(() => _autoBackup = val);
                   },

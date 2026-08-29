@@ -169,7 +169,7 @@ class CustomerCreditScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: method,
+                initialValue: method,
                 decoration: const InputDecoration(labelText: 'Payment Method', border: OutlineInputBorder()),
                 items: ['Cash', 'Card', 'Bank Transfer', 'Cheque'].map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                 onChanged: (val) {

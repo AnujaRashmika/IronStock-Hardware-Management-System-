@@ -216,7 +216,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: selectedCat,
+                        initialValue: selectedCat,
                         decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
                         items: provider.categories.map((c) => DropdownMenuItem(value: c.name, child: Text(c.name))).toList(),
                         onChanged: (val) {
@@ -227,7 +227,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: selectedUnit,
+                        initialValue: selectedUnit,
                         decoration: const InputDecoration(labelText: 'Unit of Measure', border: OutlineInputBorder()),
                         items: ['Piece', 'Box', 'Bag', 'Kg', 'Meter', 'Liter', 'Feet', 'Cubic Feet', 'Other']
                             .map((u) => DropdownMenuItem(value: u, child: Text(u)))

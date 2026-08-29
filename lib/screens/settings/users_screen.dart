@@ -97,7 +97,7 @@ class UsersScreen extends StatelessWidget {
               TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Full Staff Name *', border: OutlineInputBorder())),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: role,
+                initialValue: role,
                 decoration: const InputDecoration(labelText: 'Staff Role', border: OutlineInputBorder()),
                 items: ['Admin', 'Cashier', 'Store Keeper', 'Delivery Staff'].map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                 onChanged: (val) {

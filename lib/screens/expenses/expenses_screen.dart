@@ -108,7 +108,7 @@ class ExpensesScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
-                value: category,
+                initialValue: category,
                 decoration: const InputDecoration(labelText: 'Expense Category', border: OutlineInputBorder()),
                 items: provider.expenseCategories.map((c) => DropdownMenuItem(value: c.name, child: Text(c.name))).toList(),
                 onChanged: (val) {
@@ -121,7 +121,7 @@ class ExpensesScreen extends StatelessWidget {
               TextField(controller: amountCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Expense Amount (Rs.) *', border: OutlineInputBorder())),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: method,
+                initialValue: method,
                 decoration: const InputDecoration(labelText: 'Payment Method', border: OutlineInputBorder()),
                 items: ['Cash', 'Card', 'Bank Transfer', 'Petty Cash'].map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                 onChanged: (val) {

@@ -45,7 +45,7 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                   const Text('Select Product:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<Product>(
-                    value: _selectedProduct,
+                    initialValue: _selectedProduct,
                     isExpanded: true,
                     decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.all(12)),
                     hint: const Text('Search & Select Product'),
@@ -86,7 +86,7 @@ class _StockAdjustmentScreenState extends State<StockAdjustmentScreen> {
                     const Text('Reason:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                     const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
-                      value: _adjustmentReason,
+                      initialValue: _adjustmentReason,
                       decoration: const InputDecoration(border: OutlineInputBorder()),
                       items: ['Physical Count Discrepancy', 'Damaged Stock', 'Expired Goods', 'Stolen / Lost Item', 'Other']
                           .map((r) => DropdownMenuItem(value: r, child: Text(r)))

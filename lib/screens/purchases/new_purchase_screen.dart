@@ -57,7 +57,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<Supplier>(
-                          value: _selectedSupplier,
+                          initialValue: _selectedSupplier,
                           decoration: const InputDecoration(labelText: 'Select Supplier *', border: OutlineInputBorder()),
                           items: provider.suppliers.map((s) => DropdownMenuItem(value: s, child: Text('${s.name} (${s.company})'))).toList(),
                           onChanged: (s) => setState(() => _selectedSupplier = s),
@@ -89,7 +89,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                       Expanded(
                         flex: 3,
                         child: DropdownButtonFormField<Product>(
-                          value: _selectedProduct,
+                          initialValue: _selectedProduct,
                           decoration: const InputDecoration(labelText: 'Select Product', border: OutlineInputBorder()),
                           items: provider.products.map((p) => DropdownMenuItem(value: p, child: Text('${p.name} (${p.unit})'))).toList(),
                           onChanged: (p) {
@@ -227,7 +227,7 @@ class _NewPurchaseScreenState extends State<NewPurchaseScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: _paymentMethod,
+                    initialValue: _paymentMethod,
                     decoration: const InputDecoration(labelText: 'Payment Method', border: OutlineInputBorder()),
                     items: ['Cash', 'Card', 'Bank Transfer', 'Credit'].map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                     onChanged: (val) {

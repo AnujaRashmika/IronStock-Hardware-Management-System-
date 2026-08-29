@@ -184,7 +184,7 @@ class _SalesReturnsScreenState extends State<SalesReturnsScreen> {
                           )),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: _refundMethod,
+                        initialValue: _refundMethod,
                         decoration: const InputDecoration(labelText: 'Refund Method', border: OutlineInputBorder()),
                         items: ['Cash', 'Card', 'Bank Transfer', 'Customer Credit'].map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                         onChanged: (val) {

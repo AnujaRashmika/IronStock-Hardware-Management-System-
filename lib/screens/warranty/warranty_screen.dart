@@ -143,14 +143,14 @@ class _WarrantyScreenState extends State<WarrantyScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<Customer>(
-                    value: selectedCust,
+                    initialValue: selectedCust,
                     decoration: const InputDecoration(labelText: 'Customer', border: OutlineInputBorder()),
                     items: provider.customers.map((c) => DropdownMenuItem(value: c, child: Text('${c.name} (${c.phone})'))).toList(),
                     onChanged: (c) => setModalState(() => selectedCust = c),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<Product>(
-                    value: selectedProd,
+                    initialValue: selectedProd,
                     decoration: const InputDecoration(labelText: 'Product', border: OutlineInputBorder()),
                     items: provider.products.where((p) => p.warrantyMonths > 0 || p.category == 'Power Tools').map((p) => DropdownMenuItem(value: p, child: Text(p.name))).toList(),
                     onChanged: (p) => setModalState(() => selectedProd = p),

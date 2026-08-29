@@ -167,7 +167,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<Customer>(
-                    value: selectedCust,
+                    initialValue: selectedCust,
                     decoration: const InputDecoration(labelText: 'Customer', border: OutlineInputBorder()),
                     items: provider.customers.map((c) => DropdownMenuItem(value: c, child: Text('${c.name} (${c.phone})'))).toList(),
                     onChanged: (c) {
