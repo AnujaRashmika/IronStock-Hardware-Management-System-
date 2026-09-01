@@ -8,7 +8,7 @@ import '../../providers/settings_provider.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/constants/db_constants.dart';
 import '../../core/database/database_helper.dart';
-import '../../widgets/page_header.dart';
+import '../../widgets/app_header.dart';
 import 'activity_log_screen.dart';
 import 'notes_screen.dart';
 
@@ -120,14 +120,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
 
-    return Scaffold(
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(28, 24, 28, 32),
+    return Column(
+      children: [
+        const AppHeader(
+          title: 'Settings',
+          subtitle: 'Shop profile, logo, backup and system tools',
+        ),
+        Expanded(
+          child: ListView(
+        padding: const EdgeInsets.fromLTRB(28, 16, 28, 32),
         children: [
-          const PageHeader(
-            title: 'Settings',
-            subtitle: 'Shop profile, logo, backup and system tools',
-          ),
           // Shop details
           Card(
             child: Padding(
@@ -276,7 +278,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ],
-      ),
+          ),
+        ),
+      ],
     );
   }
 }

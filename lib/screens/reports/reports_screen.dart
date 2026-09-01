@@ -7,7 +7,7 @@ import '../../core/database/database_helper.dart';
 import '../../core/constants/db_constants.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/printer_service.dart';
-import '../../widgets/page_header.dart';
+import '../../widgets/app_header.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -164,36 +164,50 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final gross = sales - purchases;
     final net = gross - expenses - returns;
 
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            PageHeader(
+    return Column(
+      children: [
+            const AppHeader(
               title: 'Reports',
               subtitle: 'Sales, purchases, profit and expenses',
-              actions: [
-                ElevatedButton.icon(
-                  onPressed: printing ? null : _print,
-                  icon: printing
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.print, size: 18),
-                  label: const Text('Print Report'),
-                ),
-              ],
             ),
-            // Period filters
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _chip('Today', 'today'),
-                _chip('Yesterday', 'yesterday'),
-                _chip('This Week', 'week'),
-                _chip('This Month', 'month'),
-                _chip('Custom Range', 'custom'),
-              ],
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(28, 16, 28, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+            // Period filters + print
+            Padding(
+              padding: const EdgeInsets.fromLTRB(28, 0, 28, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _chip('Today', 'today'),
+                        _chip('Yesterday', 'yesterday'),
+                        _chip('This Week', 'week'),
+                        _chip('This Month', 'month'),
+                        _chip('Custom Range', 'custom'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      style: appButtonStyle(color: AppColors.green),
+                      onPressed: printing ? null : _print,
+                      icon: printing
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.print),
+                      label: const Text('Print'),
+                    ),
+                  ),
+                ],
+              ),
             ),
             if (period == 'custom') ...[
               const SizedBox(height: 12),
@@ -244,8 +258,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     ),
             ),
           ],
-        ),
-      ),
+                ),
+              ),
+            ),
+      ],
     );
   }
 

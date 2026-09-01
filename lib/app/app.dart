@@ -7,6 +7,7 @@ import '../providers/product_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/inventory_provider.dart';
+import '../providers/customer_provider.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/pos/pos_screen.dart';
@@ -37,6 +38,7 @@ class HardwareStoreApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()..load()),
         ChangeNotifierProvider(create: (_) => InventoryProvider()..load()),
+        ChangeNotifierProvider(create: (_) => CustomerProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()..load()),
       ],
       child: Consumer2<ThemeProvider, AuthProvider>(

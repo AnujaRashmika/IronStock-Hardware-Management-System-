@@ -4,7 +4,7 @@ import '../../app/theme.dart';
 import '../../core/utils/currency_utils.dart';
 import '../../repositories/dashboard_repository.dart';
 import '../../app/app.dart';
-import '../../widgets/page_header.dart';
+import '../../widgets/app_header.dart';
 import '../../core/database/database_helper.dart';
 import '../../core/constants/db_constants.dart';
 
@@ -61,23 +61,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final maxY = weekSales.fold<double>(0, (a, b) => a > b ? a : b);
     final chartMax = maxY <= 0 ? 1000.0 : maxY * 1.2;
 
-    return Scaffold(
-      body: RefreshIndicator(
+    return Column(
+      children: [
+        const AppHeader(
+          title: 'Dashboard',
+          subtitle: 'Overview of your hardware store',
+        ),
+        Expanded(
+          child: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(28, 24, 28, 32),
           children: [
-            PageHeader(
-              title: 'Dashboard',
-              subtitle: 'Overview of your hardware store',
-              actions: [
-                OutlinedButton.icon(
-                  onPressed: _load,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Refresh'),
-                ),
-              ],
-            ),
             // Main KPI cards
             LayoutBuilder(builder: (context, constraints) {
               final w = constraints.maxWidth;
@@ -217,7 +212,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             }),
           ],
         ),
-      ),
+          ),
+        ),
+      ],
     );
   }
 

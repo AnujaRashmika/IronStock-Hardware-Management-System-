@@ -5,7 +5,7 @@ import '../../core/utils/app_snackbar.dart';
 import '../../repositories/sale_repository.dart';
 import '../../services/printer_service.dart';
 import '../../providers/settings_provider.dart';
-import '../../widgets/page_header.dart';
+import '../../widgets/app_header.dart';
 import '../../app/theme.dart';
 
 class SalesHistoryScreen extends StatefulWidget {
@@ -16,7 +16,9 @@ class SalesHistoryScreen extends StatefulWidget {
 
 class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   final _repo = SaleRepository();
+  final _search = TextEditingController();
   List<Map<String, dynamic>> _list = [];
+  List<Map<String, dynamic>> _filtered = [];
   Map<String, dynamic>? _selected;
   bool loading = true;
   bool printing = false;
@@ -30,8 +32,22 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
   Future<void> _load() async {
     setState(() => loading = true);
     _list = await _repo.getAll();
+    _filtered = List.from(_list);
     _selected = null;
     setState(() => loading = false);
+  }
+
+  void _filter(String q) {
+    if (q.trim().isEmpty) {
+      _filtered = List.from(_list);
+    } else {
+      final lower = q.toLowerCase();
+      _filtered = _list.where((s) {
+        return (s['invoice_no']?.toString() ?? '').toLowerCase().contains(lower) ||
+            (s['customer_name']?.toString() ?? '').toLowerCase().contains(lower);
+      }).toList();
+    }
+    setState(() {});
   }
 
   Future<void> _printSelected() async {
@@ -101,14 +117,6 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
                     Text(CurrencyUtils.format(sale['total'] ?? 0), style: const TextStyle(fontWeight: FontWeight.w600)),
                   ],
                 ),
-                if (((sale['balance'] as num?) ?? 0) > 0)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Balance due', style: TextStyle(color: Colors.red)),
-                      Text(CurrencyUtils.format(sale['balance'] ?? 0), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
               ],
             ),
           ),
@@ -131,88 +139,99 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            PageHeader(
-              title: 'Sales History',
-              subtitle: 'View past sales — double-click for details',
-              actions: [
-                OutlinedButton.icon(
-                  onPressed: _load,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Refresh'),
+    return Column(
+      children: [
+        const AppHeader(
+          title: 'Sales History',
+          subtitle: 'Select a sale to print — double-click for details',
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: TextField(
+                          controller: _search,
+                          decoration: InputDecoration(
+                            hintText: 'Search by invoice or customer...',
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onChanged: _filter,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        style: appButtonStyle(color: AppColors.green),
+                        onPressed: (_selected == null || printing) ? null : _printSelected,
+                        icon: printing
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.print),
+                        label: const Text('Print'),
+                      ),
+                    ),
+                  ],
                 ),
-                ElevatedButton.icon(
-                  onPressed: (_selected == null || printing) ? null : _printSelected,
-                  icon: printing
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.print, size: 18),
-                  label: const Text('Print'),
+                const SizedBox(height: 24),
+                Expanded(
+                  child: loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _filtered.isEmpty
+                          ? Center(child: Text('No sales yet.', style: TextStyle(color: Colors.grey.shade600, fontSize: 16)))
+                          : Card(
+                              clipBehavior: Clip.antiAlias,
+                              child: ListView.separated(
+                                itemCount: _filtered.length,
+                                separatorBuilder: (_, __) => const Divider(height: 1),
+                                itemBuilder: (_, i) {
+                                  final s = _filtered[i];
+                                  final selected = _selected?['id'] == s['id'];
+                                  return InkWell(
+                                    onTap: () => setState(() => _selected = s),
+                                    onDoubleTap: () => _showDetails(s),
+                                    child: Container(
+                                      color: selected ? AppTheme.primaryColor.withOpacity(0.08) : null,
+                                      child: ListTile(
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                        leading: CircleAvatar(
+                                          backgroundColor: AppColors.greenSoft,
+                                          child: Icon(Icons.receipt_long, color: AppColors.green, size: 20),
+                                        ),
+                                        title: Text(s['invoice_no'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
+                                        subtitle: Text(
+                                          '${s['customer_name'] ?? 'Walk-in'} • ${s['payment_status'] ?? ''}',
+                                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                        ),
+                                        trailing: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          children: [
+                                            Text(CurrencyUtils.format(s['total'] ?? 0), style: const TextStyle(fontWeight: FontWeight.w600)),
+                                            if (((s['balance'] as num?) ?? 0) > 0)
+                                              Text('Due: ${CurrencyUtils.format(s['balance'])}',
+                                                  style: const TextStyle(color: Colors.red, fontSize: 11)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                 ),
               ],
             ),
-            Expanded(
-              child: loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _list.isEmpty
-                      ? const Center(child: Text('No sales yet'))
-                      : Card(
-                          child: ListView.separated(
-                            itemCount: _list.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
-                            itemBuilder: (_, i) {
-                              final s = _list[i];
-                              final selected = _selected?['id'] == s['id'];
-                              return InkWell(
-                                onTap: () => setState(() => _selected = s),
-                                onDoubleTap: () => _showDetails(s),
-                                child: Container(
-                                  color: selected ? AppTheme.primaryColor.withOpacity(0.08) : null,
-                                  child: ListTile(
-                                    leading: Icon(
-                                      Icons.receipt_long_outlined,
-                                      color: selected ? AppTheme.primaryColor : Colors.grey,
-                                    ),
-                                    title: Text(
-                                      s['invoice_no'] ?? '',
-                                      style: TextStyle(
-                                        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      '${s['customer_name'] ?? 'Walk-in'} • ${s['payment_status'] ?? ''}',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                    trailing: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          CurrencyUtils.format(s['total'] ?? 0),
-                                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                                        ),
-                                        if (((s['balance'] as num?) ?? 0) > 0)
-                                          Text(
-                                            'Due: ${CurrencyUtils.format(s['balance'])}',
-                                            style: const TextStyle(color: Colors.red, fontSize: 11),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
