@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/page_header.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/currency_utils.dart';
 import '../../models/customer.dart';
@@ -60,7 +61,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            const Text('Customers', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+            const Text('Customers', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
             const Spacer(),
             ElevatedButton.icon(onPressed: _add, icon: const Icon(Icons.add), label: const Text('Add Customer')),
           ]),

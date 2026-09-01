@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/page_header.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/currency_utils.dart';
 import '../../core/database/database_helper.dart';
@@ -58,7 +59,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
     return Scaffold(
       body: Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Text('Suppliers', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+          const Text('Suppliers', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const Spacer(),
           ElevatedButton.icon(onPressed: _add, icon: const Icon(Icons.add), label: const Text('Add Supplier')),
         ]),

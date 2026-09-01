@@ -11,6 +11,7 @@ class SettingsProvider extends ChangeNotifier {
   double taxRate = 0;
   String invoicePrefix = 'INV-';
   String receiptFooter = 'Thank you for shopping with us!';
+  String logoPath = '';
 
   Future<void> load() async {
     final db = await DatabaseHelper.instance.database;
@@ -23,6 +24,7 @@ class SettingsProvider extends ChangeNotifier {
     taxRate = double.tryParse(map['tax_rate'] ?? '0') ?? 0;
     invoicePrefix = map['invoice_prefix'] ?? 'INV-';
     receiptFooter = map['receipt_footer'] ?? receiptFooter;
+    logoPath = map['logo_path'] ?? '';
     notifyListeners();
   }
 
@@ -38,6 +40,7 @@ class SettingsProvider extends ChangeNotifier {
       'tax_rate': taxRate.toString(),
       'invoice_prefix': invoicePrefix,
       'receipt_footer': receiptFooter,
+      'logo_path': logoPath,
     };
     for (final e in data.entries) {
       await db.insert(
@@ -47,5 +50,15 @@ class SettingsProvider extends ChangeNotifier {
       );
     }
     notifyListeners();
+  }
+
+  Future<void> setLogoPath(String path) async {
+    logoPath = path;
+    await save();
+  }
+
+  Future<void> clearLogo() async {
+    logoPath = '';
+    await save();
   }
 }

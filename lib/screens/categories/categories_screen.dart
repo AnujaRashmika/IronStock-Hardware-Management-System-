@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/page_header.dart';
 import 'package:flutter/services.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../models/category.dart';
@@ -64,7 +65,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  const Text('Categories', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                  const Text('Categories', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                   const Spacer(),
                   ElevatedButton.icon(onPressed: _add, icon: const Icon(Icons.add), label: const Text('Add Category')),
                 ]),

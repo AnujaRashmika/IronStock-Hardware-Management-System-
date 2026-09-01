@@ -434,7 +434,18 @@ class DatabaseHelper {
       )
     ''');
 
-    // Default admin only — no sample products
+    
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT
+      )
+    ''');
+
+// Default admin only — no sample products
     await db.insert(DbConstants.users, {
       'username': AppConstants.defaultAdminUsername,
       'password': AppConstants.defaultAdminPassword,

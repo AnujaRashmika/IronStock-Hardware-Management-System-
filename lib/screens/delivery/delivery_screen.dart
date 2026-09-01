@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/page_header.dart';
 import '../../app/theme.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/constants/app_constants.dart';
@@ -37,7 +38,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Delivery Management', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+        const Text('Delivery', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         Wrap(spacing: 8, runSpacing: 8, children: [
           _chip('All', null, _counts.values.fold(0, (a, b) => a + b)),

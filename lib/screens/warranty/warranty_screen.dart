@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/page_header.dart';
 import '../../app/theme.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/constants/app_constants.dart';
@@ -70,7 +71,7 @@ class _WarrantyScreenState extends State<WarrantyScreen> with SingleTickerProvid
     return Scaffold(
       body: Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Text('Warranty', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+          const Text('Warranty', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const Spacer(),
           ElevatedButton.icon(onPressed: _newClaim, icon: const Icon(Icons.add), label: const Text('New Claim')),
         ]),

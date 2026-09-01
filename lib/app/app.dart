@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -213,19 +214,22 @@ class _Sidebar extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
             child: Row(
               children: [
-                Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.hardware, color: Colors.white, size: 22),
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: settings.logoPath.isNotEmpty && File(settings.logoPath).existsSync()
+                      ? Image.file(
+                          File(settings.logoPath),
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.hardware, size: 28, color: AppTheme.primaryColor),
+                        )
+                      : const Icon(Icons.hardware, size: 28, color: AppTheme.primaryColor),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     settings.shopName.isEmpty ? 'Hardware Store' : settings.shopName,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

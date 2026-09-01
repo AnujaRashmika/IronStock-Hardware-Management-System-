@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/page_header.dart';
 import 'package:provider/provider.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/currency_utils.dart';
@@ -97,7 +98,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     return Scaffold(
       body: Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const Text('Purchases', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+          const Text('Purchases', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const Spacer(),
           ElevatedButton.icon(onPressed: _newPurchase, icon: const Icon(Icons.add), label: const Text('New Purchase')),
         ]),

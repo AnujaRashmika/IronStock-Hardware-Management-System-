@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/page_header.dart';
 import 'package:provider/provider.dart';
 import '../../app/theme.dart';
 import '../../core/utils/app_snackbar.dart';
@@ -183,47 +184,41 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Text('Returns & Refunds', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-                const Spacer(),
+            PageHeader(
+              title: 'Returns & Refunds',
+              subtitle: 'Damaged returns do not increase stock. Good returns restock automatically.',
+              actions: [
                 ElevatedButton.icon(
                   onPressed: _newReturn,
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(Icons.add, size: 18),
                   label: const Text('New Sales Return'),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Damaged returns do not increase stock. Good returns restock automatically.',
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 16),
             Expanded(
               child: loading
                   ? const Center(child: CircularProgressIndicator())
                   : _returns.isEmpty
-                  ? const Center(child: Text('No returns yet'))
-                  : Card(
-                child: ListView.separated(
-                  itemCount: _returns.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (_, i) {
-                    final r = _returns[i];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.orangeSoft,
-                        child: Icon(Icons.assignment_return, color: AppColors.orange),
-                      ),
-                      title: Text(r['return_no'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: Text('${r['customer_name'] ?? '-'} • ${r['reason'] ?? ''} • ${r['invoice_no'] ?? ''}'),
-                      trailing: Text(CurrencyUtils.format(r['total'] ?? 0),
-                          style: const TextStyle(fontWeight: FontWeight.w700)),
-                    );
-                  },
-                ),
-              ),
+                      ? const Center(child: Text('No returns yet'))
+                      : Card(
+                          child: ListView.separated(
+                            itemCount: _returns.length,
+                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            itemBuilder: (_, i) {
+                              final r = _returns[i];
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: AppColors.orangeSoft,
+                                  child: Icon(Icons.assignment_return, color: AppColors.orange),
+                                ),
+                                title: Text(r['return_no'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700)),
+                                subtitle: Text('${r['customer_name'] ?? '-'} • ${r['reason'] ?? ''} • ${r['invoice_no'] ?? ''}'),
+                                trailing: Text(CurrencyUtils.format(r['total'] ?? 0),
+                                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                              );
+                            },
+                          ),
+                        ),
             ),
           ],
         ),

@@ -156,7 +156,7 @@ class _PosScreenState extends State<PosScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('New Sale (POS)', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                  const Text('New Sale', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _searchCtrl,

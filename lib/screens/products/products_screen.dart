@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/page_header.dart';
 import 'package:provider/provider.dart';
 import '../../app/theme.dart';
 import '../../core/utils/app_snackbar.dart';
@@ -143,12 +144,17 @@ class _ProductsScreenState extends State<ProductsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              const Text('Products', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-              const Spacer(),
-              ElevatedButton.icon(onPressed: () => _addEdit(), icon: const Icon(Icons.add), label: const Text('Add Product')),
-            ]),
-            const SizedBox(height: 16),
+            PageHeader(
+              title: 'Products',
+              subtitle: 'Manage store products and stock levels',
+              actions: [
+                ElevatedButton.icon(
+                  onPressed: () => _addEdit(),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add Product'),
+                ),
+              ],
+            ),
             Expanded(
               child: prov.loading
                   ? const Center(child: CircularProgressIndicator())

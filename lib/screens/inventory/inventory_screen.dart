@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/page_header.dart';
 import 'package:provider/provider.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/inventory_provider.dart';
@@ -75,7 +76,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     return Scaffold(
       body: Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Inventory', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+        const Text('Inventory', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         Wrap(spacing: 8, children: ['All', 'Low Stock', 'Out of Stock'].map((f) => ChoiceChip(
           label: Text(f), selected: filter == f, onSelected: (_) => setState(() => filter = f),
