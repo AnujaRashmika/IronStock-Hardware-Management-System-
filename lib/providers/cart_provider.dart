@@ -48,6 +48,18 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setCustomer({int? id, String? name}) {
+    customerId = id;
+    customerName = name;
+    notifyListeners();
+  }
+
+  void clearCustomer() {
+    customerId = null;
+    customerName = null;
+    notifyListeners();
+  }
+
   void clear() {
     _items.clear();
     customerId = null;
