@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../models/customer.dart';
 import '../../providers/customer_provider.dart';
 import '../../widgets/app_header.dart';
+import '../../core/utils/validators.dart';
+import 'package:flutter/services.dart';
 import '../../widgets/confirmation_dialog.dart';
 import '../../core/utils/app_snackbar.dart';
 import '../../core/utils/currency_utils.dart';

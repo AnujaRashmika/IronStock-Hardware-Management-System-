@@ -143,7 +143,7 @@ class _SalesHistoryScreenState extends State<SalesHistoryScreen> {
       children: [
         const AppHeader(
           title: 'Sales History',
-          subtitle: 'Select a sale to print — double-click for details',
+          subtitle: 'View and print past sales',
         ),
         Expanded(
           child: Padding(

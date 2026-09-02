@@ -68,7 +68,31 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) {
           final isDark = Theme.of(ctx).brightness == Brightness.dark;
-          return Dialog(
+          void process() {
+            if (selected == null) {
+              showErrorSnackBar(context, 'Please select a product');
+              return;
+            }
+            final q = double.tryParse(qtyCtrl.text) ?? 0;
+            if (q <= 0) {
+              showErrorSnackBar(context, 'Please enter a valid quantity');
+              return;
+            }
+            final pr = double.tryParse(priceCtrl.text) ?? 0;
+            if (pr < 0) {
+              showErrorSnackBar(context, 'Please enter a valid price');
+              return;
+            }
+            Navigator.pop(ctx, true);
+          }
+          return CallbackShortcuts(
+            bindings: {
+              const SingleActivator(LogicalKeyboardKey.enter): process,
+              const SingleActivator(LogicalKeyboardKey.numpadEnter): process,
+            },
+            child: Focus(
+              autofocus: true,
+              child: Dialog(
             backgroundColor: Colors.transparent,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
@@ -138,12 +162,14 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
                       Row(children: [
                         Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel'))),
                         const SizedBox(width: 12),
-                        Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Process'))),
+                        Expanded(child: ElevatedButton(onPressed: process, child: const Text('Process'))),
                       ]),
                     ],
                   ),
                 ),
               ),
+            ),
+          ),
             ),
           );
         },

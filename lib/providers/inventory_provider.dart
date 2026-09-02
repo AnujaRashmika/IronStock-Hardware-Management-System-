@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../repositories/product_repository.dart';
+import '../services/stock_service.dart';
 
 class InventoryProvider extends ChangeNotifier {
   /// Set before navigating to Inventory to open with a filter.
@@ -40,4 +41,27 @@ class InventoryProvider extends ChangeNotifier {
   }
 
   Future<void> loadProducts() => load();
+  Future<void> loadInventory() => load();
+
+  /// Increase stock only (positive quantity).
+  Future<bool> addStock(int productId, double quantity) async {
+    if (quantity <= 0) return false;
+    try {
+      final p = _products.where((e) => e.id == productId).toList();
+      final name = p.isNotEmpty ? p.first.name : 'Product';
+      await StockService.instance.move(
+        productId: productId,
+        productName: name,
+        type: 'adjustment',
+        quantity: quantity,
+        notes: 'Stock add',
+      );
+      await load();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
 }

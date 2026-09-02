@@ -7,6 +7,8 @@ import '../../core/database/database_helper.dart';
 import '../../core/constants/db_constants.dart';
 import '../../models/supplier.dart';
 import '../../widgets/app_header.dart';
+import '../../core/utils/validators.dart';
+import 'package:flutter/services.dart';
 import '../../widgets/confirmation_dialog.dart';
 
 class SuppliersScreen extends StatefulWidget {
@@ -120,7 +122,21 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                         const SizedBox(height: 10),
                         TextField(controller: company, decoration: const InputDecoration(labelText: 'Company', prefixIcon: Icon(Icons.business_outlined))),
                         const SizedBox(height: 10),
-                        TextField(controller: phone, decoration: const InputDecoration(labelText: 'Phone', prefixIcon: Icon(Icons.phone_outlined))),
+                        TextFormField(
+                          controller: phone,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone',
+                            prefixIcon: Icon(Icons.phone_outlined),
+                            helperText: 'Exactly 10 digits',
+                          ),
+                          keyboardType: TextInputType.phone,
+                          maxLength: 10,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
+                          validator: AppValidators.mobileOptional,
+                        ),
                         const SizedBox(height: 20),
                         Row(children: [
                           Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel'))),
@@ -185,7 +201,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
         autofocus: true,
         child: Column(
           children: [
-            const AppHeader(title: 'Suppliers', subtitle: 'Manage suppliers — Enter to add, double-click to edit'),
+            const AppHeader(title: 'Suppliers', subtitle: 'Manage your suppliers'),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(28),

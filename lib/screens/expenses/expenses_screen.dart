@@ -43,7 +43,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     String? catName = _cats.isNotEmpty ? _cats.first['name'] as String : null;
     final ok = await showDialog<bool>(context: context, builder: (ctx) => StatefulBuilder(builder: (ctx, setS) {
       final isDark = Theme.of(ctx).brightness == Brightness.dark;
-      return Dialog(
+      void save() => Navigator.pop(ctx, true);
+      return CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.enter): save,
+          const SingleActivator(LogicalKeyboardKey.numpadEnter): save,
+        },
+        child: Focus(
+          autofocus: true,
+          child: Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
           constraints: const BoxConstraints(maxWidth: 420),
@@ -64,9 +72,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             Row(children: [
               Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel'))),
               const SizedBox(width: 12),
-              Expanded(child: ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save'))),
+              Expanded(child: ElevatedButton(onPressed: save, child: const Text('Save'))),
             ]),
           ]),
+        ),
+          ),
         ),
       );
     }));

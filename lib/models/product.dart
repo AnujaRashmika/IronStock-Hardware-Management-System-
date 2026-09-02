@@ -8,6 +8,7 @@ class Product {
   final String unit;
   final double purchasePrice;
   final double sellingPrice;
+  final double discount; // per-unit discount amount
   final double wholesalePrice;
   final double stockQuantity;
   final double minStock;
@@ -31,6 +32,7 @@ class Product {
     this.unit = 'Piece',
     this.purchasePrice = 0,
     this.sellingPrice = 0,
+    this.discount = 0,
     this.wholesalePrice = 0,
     this.stockQuantity = 0,
     this.minStock = 5,
@@ -48,6 +50,8 @@ class Product {
   bool get isLowStock => stockQuantity > 0 && stockQuantity <= reorderLevel;
   bool get isOutOfStock => stockQuantity <= 0;
 
+  double get effectivePrice => sellingPrice - (discount > 0 ? discount : 0);
+
   Map<String, dynamic> toMap() => {
         'id': id,
         'sku': sku,
@@ -58,6 +62,7 @@ class Product {
         'unit': unit,
         'purchase_price': purchasePrice,
         'selling_price': sellingPrice,
+        'discount': discount,
         'wholesale_price': wholesalePrice,
         'stock_quantity': stockQuantity,
         'min_stock': minStock,
@@ -82,6 +87,7 @@ class Product {
         unit: m['unit'] as String? ?? 'Piece',
         purchasePrice: (m['purchase_price'] as num?)?.toDouble() ?? 0,
         sellingPrice: (m['selling_price'] as num?)?.toDouble() ?? 0,
+        discount: (m['discount'] as num?)?.toDouble() ?? 0,
         wholesalePrice: (m['wholesale_price'] as num?)?.toDouble() ?? 0,
         stockQuantity: (m['stock_quantity'] as num?)?.toDouble() ?? 0,
         minStock: (m['min_stock'] as num?)?.toDouble() ?? 5,
@@ -106,6 +112,7 @@ class Product {
         unit: unit,
         purchasePrice: purchasePrice,
         sellingPrice: sellingPrice,
+        discount: discount,
         wholesalePrice: wholesalePrice,
         stockQuantity: stockQuantity ?? this.stockQuantity,
         minStock: minStock,

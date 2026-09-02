@@ -61,6 +61,7 @@ class DatabaseHelper {
         unit TEXT NOT NULL DEFAULT 'Piece',
         purchase_price REAL NOT NULL DEFAULT 0,
         selling_price REAL NOT NULL DEFAULT 0,
+        discount REAL NOT NULL DEFAULT 0,
         wholesale_price REAL NOT NULL DEFAULT 0,
         stock_quantity REAL NOT NULL DEFAULT 0,
         min_stock REAL NOT NULL DEFAULT 5,
@@ -484,7 +485,13 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Future migrations
+    if (oldVersion < 3) {
+      try {
+        await db.execute(
+          'ALTER TABLE ${DbConstants.products} ADD COLUMN discount REAL NOT NULL DEFAULT 0',
+        );
+      } catch (_) {}
+    }
   }
 
   Future<void> close() async {

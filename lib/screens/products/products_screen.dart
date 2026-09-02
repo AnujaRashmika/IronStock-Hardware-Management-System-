@@ -60,6 +60,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     final brandCtrl = TextEditingController(text: existing?.brand ?? '');
     final purchaseCtrl = TextEditingController(text: existing?.purchasePrice.toString() ?? '0');
     final sellCtrl = TextEditingController(text: existing?.sellingPrice.toString() ?? '0');
+    final discountCtrl = TextEditingController(text: existing?.discount.toString() ?? '0');
     final stockCtrl = TextEditingController(text: existing?.stockQuantity.toString() ?? '0');
     final reorderCtrl = TextEditingController(text: existing?.reorderLevel.toString() ?? '10');
     final warrantyCtrl = TextEditingController(text: existing?.warrantyMonths.toString() ?? '0');
@@ -134,6 +135,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         Expanded(child: TextField(controller: sellCtrl, decoration: const InputDecoration(labelText: 'Selling Price'), keyboardType: TextInputType.number)),
                       ]),
                       const SizedBox(height: 10),
+                      TextField(controller: discountCtrl, decoration: const InputDecoration(labelText: 'Discount (per unit)'), keyboardType: TextInputType.number),
+                      const SizedBox(height: 10),
                       Row(children: [
                         Expanded(child: TextField(controller: stockCtrl, decoration: const InputDecoration(labelText: 'Stock'), keyboardType: TextInputType.number)),
                         const SizedBox(width: 10),
@@ -168,6 +171,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       unit: unit,
       purchasePrice: double.tryParse(purchaseCtrl.text) ?? 0,
       sellingPrice: double.tryParse(sellCtrl.text) ?? 0,
+      discount: double.tryParse(discountCtrl.text) ?? 0,
       stockQuantity: double.tryParse(stockCtrl.text) ?? 0,
       reorderLevel: double.tryParse(reorderCtrl.text) ?? 10,
       minStock: double.tryParse(reorderCtrl.text) ?? 10,

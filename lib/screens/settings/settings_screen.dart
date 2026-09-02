@@ -9,6 +9,8 @@ import '../../core/utils/app_snackbar.dart';
 import '../../core/constants/db_constants.dart';
 import '../../core/database/database_helper.dart';
 import '../../widgets/app_header.dart';
+import '../../core/utils/validators.dart';
+import 'package:flutter/services.dart';
 import 'activity_log_screen.dart';
 import 'notes_screen.dart';
 
@@ -143,7 +145,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 10),
                   TextField(controller: address, decoration: const InputDecoration(labelText: 'Address')),
                   const SizedBox(height: 10),
-                  TextField(controller: phone, decoration: const InputDecoration(labelText: 'Phone')),
+                  TextFormField(
+                    controller: phone,
+                    decoration: const InputDecoration(labelText: 'Phone', helperText: 'Exactly 10 digits'),
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    validator: AppValidators.mobileOptional,
+                  ),
                   const SizedBox(height: 10),
                   TextField(controller: footer, decoration: const InputDecoration(labelText: 'Receipt footer')),
                   const SizedBox(height: 16),

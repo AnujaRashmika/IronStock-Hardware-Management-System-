@@ -220,7 +220,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           children: [
             const AppHeader(
               title: 'Categories',
-              subtitle: 'Organize products — Enter to add, double-click to edit',
+              subtitle: 'Organize products by category',
             ),
             Expanded(
               child: Padding(

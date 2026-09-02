@@ -1,7 +1,7 @@
 class DbConstants {
   DbConstants._();
   static const String databaseName = 'hardware_store.db';
-  static const int databaseVersion = 2;
+  static const int databaseVersion = 3;
 
   static const String users = 'users';
   static const String categories = 'categories';

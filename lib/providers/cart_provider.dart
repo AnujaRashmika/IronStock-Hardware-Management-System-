@@ -15,17 +15,24 @@ class CartProvider extends ChangeNotifier {
   double get subtotal => _items.fold(0, (s, i) => s + i.lineTotal);
   double get total => subtotal - discount + tax + deliveryCharge;
 
+  /// Unit price stays original selling price.
+  /// Product per-unit discount is stored only on CartItem.discount (once).
   void addProduct(Product p, {double qty = 1}) {
     final existing = _items.indexWhere((i) => i.productId == p.id);
+    final unitDiscount = p.discount > 0 ? p.discount : 0.0;
     if (existing >= 0) {
       _items[existing].quantity += qty;
+      if (unitDiscount > 0) {
+        _items[existing].discount = unitDiscount * _items[existing].quantity;
+      }
     } else {
       _items.add(CartItem(
         productId: p.id!,
         productName: p.name,
         unit: p.unit,
-        unitPrice: p.sellingPrice,
+        unitPrice: p.sellingPrice, // original price — never pre-discounted
         quantity: qty,
+        discount: unitDiscount * qty,
       ));
     }
     notifyListeners();
@@ -37,7 +44,12 @@ class CartProvider extends ChangeNotifier {
       if (qty <= 0) {
         _items.removeAt(i);
       } else {
+        final oldQty = _items[i].quantity;
         _items[i].quantity = qty;
+        if (oldQty > 0 && _items[i].discount > 0) {
+          final perUnit = _items[i].discount / oldQty;
+          _items[i].discount = perUnit * qty;
+        }
       }
       notifyListeners();
     }

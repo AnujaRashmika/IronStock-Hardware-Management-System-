@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../../app/theme.dart';
 import '../../core/utils/currency_utils.dart';
@@ -254,6 +255,97 @@ class _ReportsScreenState extends State<ReportsScreen> {
                             ],
                           );
                         }),
+                        const SizedBox(height: 20),
+                        LayoutBuilder(builder: (context, c) {
+                          final wide = c.maxWidth > 720;
+                          final pie = Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Breakdown', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 16),
+                                  SizedBox(
+                                    height: 220,
+                                    child: (sales + purchases + expenses + returns) <= 0
+                                        ? Center(child: Text('No data for chart', style: TextStyle(color: Colors.grey.shade600)))
+                                        : PieChart(
+                                            PieChartData(
+                                              sectionsSpace: 2,
+                                              centerSpaceRadius: 42,
+                                              sections: [
+                                                if (sales > 0)
+                                                  PieChartSectionData(value: sales, title: 'Sales', color: AppColors.green, radius: 48, titleStyle: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
+                                                if (purchases > 0)
+                                                  PieChartSectionData(value: purchases, title: 'Buy', color: AppColors.blue, radius: 48, titleStyle: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
+                                                if (expenses > 0)
+                                                  PieChartSectionData(value: expenses, title: 'Exp', color: AppColors.red, radius: 48, titleStyle: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
+                                                if (returns > 0)
+                                                  PieChartSectionData(value: returns, title: 'Ret', color: AppColors.orange, radius: 48, titleStyle: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600)),
+                                              ],
+                                            ),
+                                          ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Wrap(
+                                    spacing: 16,
+                                    runSpacing: 8,
+                                    children: [
+                                      _legend(AppColors.green, 'Sales'),
+                                      _legend(AppColors.blue, 'Purchases'),
+                                      _legend(AppColors.red, 'Expenses'),
+                                      _legend(AppColors.orange, 'Returns'),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                          final bar = Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Sales vs Costs', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 16),
+                                  SizedBox(
+                                    height: 220,
+                                    child: BarChart(
+                                      BarChartData(
+                                        maxY: [sales, purchases, expenses, returns, 1.0].reduce((a, b) => a > b ? a : b) * 1.2,
+                                        gridData: FlGridData(show: true, drawVerticalLine: false),
+                                        borderData: FlBorderData(show: false),
+                                        titlesData: FlTitlesData(
+                                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40, getTitlesWidget: (v, _) => Text(v >= 1000 ? '${(v/1000).toStringAsFixed(0)}k' : v.toStringAsFixed(0), style: const TextStyle(fontSize: 10)))),
+                                          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
+                                            const labels = ['Sales', 'Buy', 'Exp', 'Ret'];
+                                            final i = v.toInt();
+                                            if (i < 0 || i > 3) return const SizedBox();
+                                            return Padding(padding: const EdgeInsets.only(top: 6), child: Text(labels[i], style: const TextStyle(fontSize: 11)));
+                                          })),
+                                        ),
+                                        barGroups: [
+                                          BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: sales, color: AppColors.green, width: 22, borderRadius: const BorderRadius.vertical(top: Radius.circular(6)))]),
+                                          BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: purchases, color: AppColors.blue, width: 22, borderRadius: const BorderRadius.vertical(top: Radius.circular(6)))]),
+                                          BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: expenses, color: AppColors.red, width: 22, borderRadius: const BorderRadius.vertical(top: Radius.circular(6)))]),
+                                          BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: returns, color: AppColors.orange, width: 22, borderRadius: const BorderRadius.vertical(top: Radius.circular(6)))]),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                          if (wide) {
+                            return Row(children: [Expanded(child: pie), const SizedBox(width: 16), Expanded(child: bar)]);
+                          }
+                          return Column(children: [pie, const SizedBox(height: 16), bar]);
+                        }),
                       ],
                     ),
             ),
@@ -274,6 +366,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
         setState(() => period = value);
         await _load();
       },
+    );
+  }
+
+  Widget _legend(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
     );
   }
 
