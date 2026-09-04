@@ -10,6 +10,7 @@ import '../../widgets/app_header.dart';
 
 class DeliveryScreen extends StatefulWidget {
   const DeliveryScreen({super.key});
+  static String? pendingStatusFilter;
   @override
   State<DeliveryScreen> createState() => _DeliveryScreenState();
 }
@@ -25,6 +26,10 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
   @override
   void initState() {
     super.initState();
+    if (DeliveryScreen.pendingStatusFilter != null) {
+      statusFilter = DeliveryScreen.pendingStatusFilter;
+      DeliveryScreen.pendingStatusFilter = null;
+    }
     _load();
   }
 

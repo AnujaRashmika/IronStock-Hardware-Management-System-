@@ -30,11 +30,13 @@ class _PosScreenState extends State<PosScreen> {
   List<Product> _filtered = [];
   List<Customer> _customerResults = [];
   bool _checkingOut = false;
+  bool _dialogOpen = false;
   bool _showCustomerResults = false;
 
   @override
   void initState() {
     super.initState();
+    HardwareKeyboard.instance.addHandler(_onGlobalKey);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await context.read<ProductProvider>().load();
       await context.read<CustomerProvider>().loadCustomers();
@@ -42,8 +44,25 @@ class _PosScreenState extends State<PosScreen> {
     });
   }
 
+  /// Enter opens checkout when cart has items — works even after focus leaves fields.
+  bool _onGlobalKey(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
+    if (event.logicalKey != LogicalKeyboardKey.enter &&
+        event.logicalKey != LogicalKeyboardKey.numpadEnter) {
+      return false;
+    }
+    if (!mounted || _checkingOut) return false;
+    // Dialog open (qty / payment / print) — do not steal Enter
+    if (Navigator.of(context).canPop()) return false;
+    final cart = context.read<CartProvider>();
+    if (cart.items.isEmpty) return false;
+    _checkout();
+    return true;
+  }
+
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onGlobalKey);
     _searchCtrl.dispose();
     _customerSearchCtrl.dispose();
     super.dispose();
@@ -166,6 +185,7 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   Future<void> _checkout() async {
+    if (_checkingOut || _dialogOpen) return;
     final cart = context.read<CartProvider>();
     if (cart.items.isEmpty) {
       showErrorSnackBar(context, 'Cart is empty');
@@ -178,13 +198,23 @@ class _PosScreenState extends State<PosScreen> {
     final addrCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
 
+    _dialogOpen = true;
     final ok = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) {
           final isDark = Theme.of(ctx).brightness == Brightness.dark;
+          final lockPaid = method == 'Card' || method == 'Bank Transfer';
+          if (lockPaid) {
+            paidCtrl.text = cart.total.toStringAsFixed(2);
+          }
 
-          void complete() => Navigator.pop(ctx, true);
+          void complete() {
+            if (Navigator.of(ctx).canPop()) {
+              Navigator.pop(ctx, true);
+            }
+          }
 
           return CallbackShortcuts(
             bindings: {
@@ -203,71 +233,99 @@ class _PosScreenState extends State<PosScreen> {
                       color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Checkout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 8),
-                        if (cart.customerName != null && cart.customerName!.isNotEmpty)
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            margin: const EdgeInsets.only(bottom: 8),
-                            decoration: BoxDecoration(color: AppColors.greenSoft, borderRadius: BorderRadius.circular(10)),
-                            child: Text('Customer: ${cart.customerName}',
-                                style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.green)),
-                          )
-                        else
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            margin: const EdgeInsets.only(bottom: 8),
-                            decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(10)),
-                            child: Text('Walk-in (no customer name on bill)',
-                                style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
-                          ),
-                        Text('Total: ${CurrencyUtils.format(cart.total)}',
-                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppTheme.primaryColor)),
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          value: method,
-                          decoration: const InputDecoration(labelText: 'Payment Method'),
-                          items: AppConstants.paymentMethods.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
-                          onChanged: (v) => setS(() => method = v ?? 'Cash'),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: paidCtrl,
-                          autofocus: true,
-                          decoration: const InputDecoration(labelText: 'Paid Amount'),
-                          keyboardType: TextInputType.number,
-                          onSubmitted: (_) => complete(),
-                        ),
-                        CheckboxListTile(
-                          value: needDelivery,
-                          onChanged: (v) => setS(() => needDelivery = v ?? false),
-                          title: const Text('Create Delivery'),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        if (needDelivery) ...[
-                          TextField(controller: addrCtrl, decoration: const InputDecoration(labelText: 'Delivery Address')),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Checkout', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
+                          if (cart.customerName != null && cart.customerName!.isNotEmpty)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(color: AppColors.greenSoft, borderRadius: BorderRadius.circular(10)),
+                              child: Text('Customer: ${cart.customerName}',
+                                  style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.green)),
+                            )
+                          else
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(10)),
+                              child: Text('Walk-in (no customer name on bill)',
+                                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+                            ),
+                          Text('Total: ${CurrencyUtils.format(cart.total)}',
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppTheme.primaryColor)),
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<String>(
+                            value: method,
+                            decoration: const InputDecoration(labelText: 'Payment Method'),
+                            items: AppConstants.paymentMethods
+                                .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                                .toList(),
+                            onChanged: (v) {
+                              setS(() {
+                                method = v ?? 'Cash';
+                                if (method == 'Card' || method == 'Bank Transfer') {
+                                  paidCtrl.text = cart.total.toStringAsFixed(2);
+                                }
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 12),
                           TextField(
-                          controller: phoneCtrl,
-                          decoration: const InputDecoration(labelText: 'Phone', helperText: 'Exactly 10 digits'),
-                          keyboardType: TextInputType.phone,
-                          maxLength: 10,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
-                        ),
+                            controller: paidCtrl,
+                            autofocus: !lockPaid,
+                            readOnly: lockPaid,
+                            enabled: true,
+                            decoration: InputDecoration(
+                              labelText: 'Paid Amount',
+                              helperText: lockPaid ? 'Full amount for $method' : null,
+                              filled: lockPaid,
+                              fillColor: lockPaid ? (isDark ? Colors.white10 : Colors.grey.shade100) : null,
+                            ),
+                            keyboardType: TextInputType.number,
+                            onSubmitted: (_) => complete(),
+                          ),
+                          CheckboxListTile(
+                            value: needDelivery,
+                            onChanged: (v) => setS(() => needDelivery = v ?? false),
+                            title: const Text('Create Delivery'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          if (needDelivery) ...[
+                            TextField(controller: addrCtrl, decoration: const InputDecoration(labelText: 'Delivery Address')),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: phoneCtrl,
+                              decoration: const InputDecoration(labelText: 'Phone'),
+                              keyboardType: TextInputType.phone,
+                              maxLength: 10,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(10),
+                              ],
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+                          Row(children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  if (Navigator.of(ctx).canPop()) Navigator.pop(ctx, false);
+                                },
+                                child: const Text('Cancel'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(child: ElevatedButton(onPressed: complete, child: const Text('Complete Sale'))),
+                          ]),
                         ],
-                        const SizedBox(height: 16),
-                        Row(children: [
-                          Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel'))),
-                          const SizedBox(width: 12),
-                          Expanded(child: ElevatedButton(onPressed: complete, child: const Text('Complete Sale'))),
-                        ]),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -277,8 +335,10 @@ class _PosScreenState extends State<PosScreen> {
         },
       ),
     );
+    _dialogOpen = false;
 
-    if (ok != true || !mounted) return;
+    if (ok != true) return;
+
     setState(() => _checkingOut = true);
 
     int? saleId;
@@ -286,7 +346,9 @@ class _PosScreenState extends State<PosScreen> {
     List<Map<String, dynamic>> saleItems = [];
 
     try {
-      final paid = double.tryParse(paidCtrl.text) ?? cart.total;
+      final paid = (method == 'Card' || method == 'Bank Transfer')
+          ? cart.total
+          : (double.tryParse(paidCtrl.text) ?? cart.total);
       final auth = context.read<AuthProvider>();
       saleId = await _saleRepo.createSale(
         items: cart.items,
@@ -304,7 +366,7 @@ class _PosScreenState extends State<PosScreen> {
             ? {
                 'address': addrCtrl.text,
                 'phone': phoneCtrl.text,
-                'customer_name': cart.customerName ?? 'Walk-in',
+                'customerName': cart.customerName ?? 'Walk-in',
               }
             : null,
       );
@@ -317,10 +379,10 @@ class _PosScreenState extends State<PosScreen> {
         username: auth.currentUser?.username,
       );
 
-      // Load sale for print
-      final all = await _saleRepo.getAll();
-      saleRow = all.firstWhere((s) => s['id'] == saleId, orElse: () => {});
-      saleItems = await _saleRepo.getItems(saleId);
+      if (saleId != null) {
+        saleRow = await _saleRepo.getById(saleId);
+        saleItems = await _saleRepo.getItems(saleId);
+      }
 
       cart.clear();
       _customerSearchCtrl.clear();
@@ -328,17 +390,18 @@ class _PosScreenState extends State<PosScreen> {
       _onSearch(_searchCtrl.text);
     } catch (e) {
       if (mounted) showErrorSnackBar(context, 'Sale failed: $e');
-      setState(() => _checkingOut = false);
+      if (mounted) setState(() => _checkingOut = false);
       return;
     }
 
-    setState(() => _checkingOut = false);
-
+    if (mounted) setState(() => _checkingOut = false);
     if (!mounted) return;
 
-    // Print or Later?
+    // Print or Later — separate dialog only
+    _dialogOpen = true;
     final printNow = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: const Text('Sale completed'),
         content: const Text('Print the bill now?'),
@@ -352,17 +415,18 @@ class _PosScreenState extends State<PosScreen> {
         ],
       ),
     );
+    _dialogOpen = false;
 
     if (printNow == true && saleRow != null && saleRow.isNotEmpty) {
+      final settings = context.read<SettingsProvider>();
       try {
-        final settings = context.read<SettingsProvider>();
         await PrinterService.instance.printSaleBill(
           shopName: settings.shopName,
           shopAddress: settings.shopAddress,
           shopPhone: settings.shopPhone,
           invoiceNo: saleRow['invoice_no']?.toString() ?? '',
           customerName: saleRow['customer_name']?.toString() ?? 'Walk-in',
-          date: saleRow['created_at']?.toString().substring(0, 16) ?? '',
+          date: saleRow['created_at']?.toString() ?? DateTime.now().toIso8601String(),
           items: saleItems,
           subtotal: (saleRow['subtotal'] as num?)?.toDouble() ?? 0,
           discount: (saleRow['discount'] as num?)?.toDouble() ?? 0,
@@ -585,56 +649,64 @@ class _PosScreenState extends State<PosScreen> {
                                           padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
                                           child: Column(
                                             children: [
-                                              // Product info — double-click to set quantity (NOT the +/- area)
-                                              InkWell(
-                                                borderRadius: BorderRadius.circular(10),
-                                                onDoubleTap: () => _editQty(item.productId, item.quantity),
-                                                child: Row(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Container(
-                                                      width: 40,
-                                                      height: 40,
-                                                      decoration: BoxDecoration(
-                                                        color: AppColors.greenSoft,
-                                                        borderRadius: BorderRadius.circular(12),
-                                                      ),
-                                                      child: const Icon(Icons.hardware_rounded, color: AppTheme.primaryColor, size: 20),
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    Expanded(
-                                                      child: Column(
+                                              // Product info — double-click name/icon only (NOT close, NOT +/-)
+                                              Row(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Expanded(
+                                                    child: InkWell(
+                                                      borderRadius: BorderRadius.circular(10),
+                                                      onDoubleTap: () => _editQty(item.productId, item.quantity),
+                                                      child: Row(
                                                         crossAxisAlignment: CrossAxisAlignment.start,
                                                         children: [
-                                                          Text(
-                                                            item.productName,
-                                                            maxLines: 2,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                                                          ),
-                                                          const SizedBox(height: 2),
-                                                          Text(
-                                                            '${CurrencyUtils.format(item.unitPrice)} each',
-                                                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                                                          ),
-                                                          if (item.discount > 0)
-                                                            Text(
-                                                              'Discount: -${CurrencyUtils.format(item.discount)}',
-                                                              style: const TextStyle(fontSize: 11, color: Colors.red),
+                                                          Container(
+                                                            width: 40,
+                                                            height: 40,
+                                                            decoration: BoxDecoration(
+                                                              color: AppColors.greenSoft,
+                                                              borderRadius: BorderRadius.circular(12),
                                                             ),
+                                                            child: const Icon(Icons.hardware_rounded, color: AppTheme.primaryColor, size: 20),
+                                                          ),
+                                                          const SizedBox(width: 10),
+                                                          Expanded(
+                                                            child: Column(
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              children: [
+                                                                Text(
+                                                                  item.productName,
+                                                                  maxLines: 2,
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                                                                ),
+                                                                const SizedBox(height: 2),
+                                                                Text(
+                                                                  '${CurrencyUtils.format(item.unitPrice)} each',
+                                                                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                                                ),
+                                                                if (item.discount > 0)
+                                                                  Text(
+                                                                    'Discount: -${CurrencyUtils.format(item.discount)}',
+                                                                    style: const TextStyle(fontSize: 11, color: Colors.red),
+                                                                  ),
+                                                              ],
+                                                            ),
+                                                          ),
                                                         ],
                                                       ),
                                                     ),
-                                                    InkWell(
-                                                      borderRadius: BorderRadius.circular(8),
-                                                      onTap: () => cart.remove(item.productId),
-                                                      child: Padding(
-                                                        padding: const EdgeInsets.all(4),
-                                                        child: Icon(Icons.close, size: 18, color: Colors.grey.shade500),
-                                                      ),
+                                                  ),
+                                                  // Close is OUTSIDE double-tap zone — never opens qty dialog
+                                                  InkWell(
+                                                    borderRadius: BorderRadius.circular(8),
+                                                    onTap: () => cart.remove(item.productId),
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.all(4),
+                                                      child: Icon(Icons.close, size: 18, color: Colors.grey.shade500),
                                                     ),
-                                                  ],
-                                                ),
+                                                  ),
+                                                ],
                                               ),
                                               const SizedBox(height: 10),
                                               // Qty +/- — single tap only, no double-click action
@@ -680,7 +752,7 @@ class _PosScreenState extends State<PosScreen> {
                                                   ),
                                                   const Spacer(),
                                                   Text(
-                                                    CurrencyUtils.format(item.lineTotal),
+                                                    CurrencyUtils.format(item.lineGross),
                                                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                                                   ),
                                                 ],

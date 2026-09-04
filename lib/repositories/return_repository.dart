@@ -47,7 +47,7 @@ class ReturnRepository {
         'subtotal': total,
         'total': total,
         'restock': 1,
-        'status': 'completed',
+        'status': doRefund ? 'refunded' : 'pending',
         'notes': notes,
         'created_by': createdBy,
         'created_at': now,
@@ -114,4 +114,10 @@ class ReturnRepository {
     final db = await _db.database;
     return db.query(DbConstants.returns, orderBy: 'created_at DESC');
   }
+
+  Future<List<Map<String, dynamic>>> getItems(int returnId) async {
+    final db = await _db.database;
+    return db.query(DbConstants.returnItems, where: 'return_id = ?', whereArgs: [returnId]);
+  }
 }
+

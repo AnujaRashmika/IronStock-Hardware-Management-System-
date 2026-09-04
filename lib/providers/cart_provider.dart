@@ -6,17 +6,23 @@ class CartProvider extends ChangeNotifier {
   final List<CartItem> _items = [];
   int? customerId;
   String? customerName;
-  double discount = 0;
+  /// Extra cart-level discount (manual). Item discounts are summed separately.
+  double extraDiscount = 0;
   double tax = 0;
   double deliveryCharge = 0;
 
   List<CartItem> get items => List.unmodifiable(_items);
   int get itemCount => _items.length;
-  double get subtotal => _items.fold(0, (s, i) => s + i.lineTotal);
+
+  /// Sum of full prices (before any discounts).
+  double get subtotal => _items.fold(0.0, (s, i) => s + i.lineGross);
+
+  /// All discounts: per-line product discounts + optional extra.
+  double get itemsDiscount => _items.fold(0.0, (s, i) => s + i.discount);
+  double get discount => itemsDiscount + extraDiscount;
+
   double get total => subtotal - discount + tax + deliveryCharge;
 
-  /// Unit price stays original selling price.
-  /// Product per-unit discount is stored only on CartItem.discount (once).
   void addProduct(Product p, {double qty = 1}) {
     final existing = _items.indexWhere((i) => i.productId == p.id);
     final unitDiscount = p.discount > 0 ? p.discount : 0.0;
@@ -30,7 +36,7 @@ class CartProvider extends ChangeNotifier {
         productId: p.id!,
         productName: p.name,
         unit: p.unit,
-        unitPrice: p.sellingPrice, // original price — never pre-discounted
+        unitPrice: p.sellingPrice,
         quantity: qty,
         discount: unitDiscount * qty,
       ));
@@ -76,7 +82,7 @@ class CartProvider extends ChangeNotifier {
     _items.clear();
     customerId = null;
     customerName = null;
-    discount = 0;
+    extraDiscount = 0;
     tax = 0;
     deliveryCharge = 0;
     notifyListeners();

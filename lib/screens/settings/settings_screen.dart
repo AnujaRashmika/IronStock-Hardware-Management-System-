@@ -103,7 +103,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'],
+        allowedExtensions: [
+          'png', 'jpg', 'jpeg', 'jpe', 'jfif', 'gif', 'webp', 'bmp', 'wbmp',
+          'ico', 'tif', 'tiff', 'heic', 'heif', 'avif', 'svg',
+        ],
+        allowMultiple: false,
+        withData: false,
       );
       if (result == null || result.files.single.path == null) return;
       final srcPath = result.files.single.path!;
@@ -147,7 +152,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: phone,
-                    decoration: const InputDecoration(labelText: 'Phone', helperText: 'Exactly 10 digits'),
+                    decoration: const InputDecoration(labelText: 'Phone', counterText: ''),
                     keyboardType: TextInputType.phone,
                     maxLength: 10,
                     inputFormatters: [

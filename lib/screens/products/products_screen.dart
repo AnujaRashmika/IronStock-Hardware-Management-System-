@@ -66,13 +66,31 @@ class _ProductsScreenState extends State<ProductsScreen> {
     final warrantyCtrl = TextEditingController(text: existing?.warrantyMonths.toString() ?? '0');
     String unit = existing?.unit ?? 'Piece';
     int? catId = existing?.categoryId;
+    bool isActive = existing?.isActive ?? true;
+    final catSearchCtrl = TextEditingController(
+      text: existing == null
+          ? ''
+          : (_cats.where((c) => c.id == existing.categoryId).map((c) => c.name).cast<String?>().followedBy([null]).first ?? ''),
+    );
+    List<Category> catHits = [];
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) {
           final isDark = Theme.of(ctx).brightness == Brightness.dark;
-          void submit() => Navigator.pop(ctx, true);
+          void submit() {
+            if (nameCtrl.text.trim().isEmpty) {
+              showErrorSnackBar(context, 'Product name is required');
+              return;
+            }
+            final sell = double.tryParse(sellCtrl.text);
+            if (sell == null || sell < 0) {
+              showErrorSnackBar(context, 'Selling price is required');
+              return;
+            }
+            Navigator.pop(ctx, true);
+          }
           return CallbackShortcuts(
             bindings: {
               const SingleActivator(LogicalKeyboardKey.enter): submit,
@@ -117,14 +135,60 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: DropdownButtonFormField<int?>(
-                            value: catId,
-                            decoration: const InputDecoration(labelText: 'Category'),
-                            items: [
-                              const DropdownMenuItem(value: null, child: Text('None')),
-                              ..._cats.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              TextField(
+                                controller: catSearchCtrl,
+                                decoration: InputDecoration(
+                                  labelText: 'Category (type to search)',
+                                  suffixIcon: catId != null
+                                      ? IconButton(
+                                          icon: const Icon(Icons.close, size: 18),
+                                          onPressed: () => setS(() {
+                                            catId = null;
+                                            catSearchCtrl.clear();
+                                            catHits = [];
+                                          }),
+                                        )
+                                      : null,
+                                ),
+                                onChanged: (v) {
+                                  final q = v.trim().toLowerCase();
+                                  setS(() {
+                                    catId = null;
+                                    catHits = q.isEmpty
+                                        ? []
+                                        : _cats.where((c) => c.name.toLowerCase().contains(q)).take(8).toList();
+                                  });
+                                },
+                              ),
+                              if (catHits.isNotEmpty)
+                                Container(
+                                  constraints: const BoxConstraints(maxHeight: 120),
+                                  margin: const EdgeInsets.only(top: 4),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey.shade300),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: catHits.length,
+                                    itemBuilder: (_, i) {
+                                      final c = catHits[i];
+                                      return ListTile(
+                                        dense: true,
+                                        title: Text(c.name, style: const TextStyle(fontSize: 13)),
+                                        onTap: () => setS(() {
+                                          catId = c.id;
+                                          catSearchCtrl.text = c.name;
+                                          catHits = [];
+                                        }),
+                                      );
+                                    },
+                                  ),
+                                ),
                             ],
-                            onChanged: (v) => setS(() => catId = v),
                           ),
                         ),
                       ]),
@@ -144,7 +208,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       ]),
                       const SizedBox(height: 10),
                       TextField(controller: warrantyCtrl, decoration: const InputDecoration(labelText: 'Warranty (months)'), keyboardType: TextInputType.number),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Active'),
+                        value: isActive,
+                        onChanged: (v) => setS(() => isActive = v),
+                      ),
+                      const SizedBox(height: 12),
                       Row(children: [
                         Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel'))),
                         const SizedBox(width: 12),
@@ -176,6 +247,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       reorderLevel: double.tryParse(reorderCtrl.text) ?? 10,
       minStock: double.tryParse(reorderCtrl.text) ?? 10,
       warrantyMonths: int.tryParse(warrantyCtrl.text) ?? 0,
+      isActive: isActive,
       createdAt: existing?.createdAt ?? DateTime.now().toIso8601String(),
       updatedAt: DateTime.now().toIso8601String(),
     );
@@ -190,6 +262,51 @@ class _ProductsScreenState extends State<ProductsScreen> {
       }
     }
   }
+
+
+
+  Future<void> _toggleActive(Product p) async {
+    final ok = await context.read<ProductProvider>().toggleActive(p);
+    if (!mounted) return;
+    if (ok) {
+      showSuccessSnackBar(
+        context,
+        p.isActive ? 'Product deactivated' : 'Product activated',
+      );
+      _applyFilter(_search.text);
+    } else {
+      showErrorSnackBar(
+        context,
+        context.read<ProductProvider>().error ?? 'Failed to update status',
+      );
+    }
+  }
+
+  Future<void> _deleteProduct(Product p) async {
+    final confirm = await showConfirmationDialog(
+      context,
+      title: 'Delete Product',
+      message: 'Delete "${p.name}" permanently? This cannot be undone.',
+      confirmText: 'Delete',
+      isDestructive: true,
+      icon: Icons.delete_outline_rounded,
+    );
+    if (!confirm) return;
+    final ok = await context.read<ProductProvider>().delete(p.id!);
+    if (!mounted) return;
+    if (ok) {
+      showSuccessSnackBar(context, 'Product deleted');
+      _applyFilter(_search.text);
+    } else {
+      showErrorSnackBar(
+        context,
+        context.read<ProductProvider>().error ?? 'Failed to delete',
+      );
+    }
+  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -253,50 +370,165 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 )
                               : Card(
                                   clipBehavior: Clip.antiAlias,
-                                  child: ListView.separated(
+                                  child: Column(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
+                                        child: Row(
+                                          children: [
+                                            const Expanded(flex: 3, child: Text('Product', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey))),
+                                            const Expanded(flex: 2, child: Text('Price', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey))),
+                                            const Expanded(flex: 2, child: Text('Stock', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey))),
+                                            const Expanded(flex: 2, child: Text('Status', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey))),
+                                            const SizedBox(width: 72, child: Text('Active', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey))),
+                                            const SizedBox(width: 84),
+                                          ],
+                                        ),
+                                      ),
+                                      Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
+                                      Expanded(
+                                        child: ListView.separated(
                                     itemCount: _filtered.length,
-                                    separatorBuilder: (_, __) => const Divider(height: 1),
+                                    separatorBuilder: (_, __) => Divider(height: 1, thickness: 1, color: Colors.grey.shade200),
                                     itemBuilder: (_, i) {
                                       final p = _filtered[i];
-                                      Color statusColor = Colors.green;
-                                      String status = 'In Stock';
-                                      if (p.isOutOfStock) {
-                                        status = 'Out';
-                                        statusColor = Colors.red;
-                                      } else if (p.isLowStock) {
-                                        status = 'Low';
-                                        statusColor = Colors.orange;
-                                      }
+                                      final isOut = p.isOutOfStock;
+                                      final isLow = p.isLowStock;
+                                      final stockLabel = isOut ? 'Out of Stock' : (isLow ? 'Low Stock' : 'In Stock');
+                                      final stockColor = isOut ? Colors.red : (isLow ? Colors.orange.shade800 : AppColors.green);
+
                                       return InkWell(
                                         onDoubleTap: () => _addEdit(p),
-                                        child: ListTile(
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                                          leading: CircleAvatar(
-                                            backgroundColor: AppColors.greenSoft,
-                                            child: Text(
-                                              p.name.isNotEmpty ? p.name[0].toUpperCase() : 'P',
-                                              style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                          title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                          subtitle: Text(
-                                            '${p.unit} • ${CurrencyUtils.format(p.sellingPrice)} • Stock: ${p.stockQuantity}',
-                                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                                          ),
-                                          trailing: Row(
-                                            mainAxisSize: MainAxisSize.min,
+                                        child: Padding(
+                                          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+                                          child: Row(
                                             children: [
-                                              Text(status, style: TextStyle(color: statusColor, fontWeight: FontWeight.w600, fontSize: 12)),
-                                              const SizedBox(width: 8),
-                                              IconButton(
-                                                icon: const Icon(Icons.edit_outlined, color: Colors.orange),
-                                                onPressed: () => _addEdit(p),
+                                              // Product
+                                              Expanded(
+                                                flex: 3,
+                                                child: Row(
+                                                  children: [
+                                                    Container(
+                                                      width: 36,
+                                                      height: 36,
+                                                      alignment: Alignment.center,
+                                                      decoration: const BoxDecoration(
+                                                        color: AppColors.greenSoft,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: Text(
+                                                        p.name.isNotEmpty ? p.name[0].toUpperCase() : 'P',
+                                                        style: const TextStyle(
+                                                          fontWeight: FontWeight.w700,
+                                                          color: AppColors.green,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 14),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            p.name,
+                                                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                          if (p.sku != null && p.sku!.isNotEmpty) ...[
+                                                            const SizedBox(height: 2),
+                                                            Text(
+                                                              'SKU: ${p.sku}',
+                                                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                                              maxLines: 1,
+                                                              overflow: TextOverflow.ellipsis,
+                                                            ),
+                                                          ],
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              // Price
+                                              Expanded(
+                                                flex: 2,
+                                                child: Text(
+                                                  CurrencyUtils.format(p.sellingPrice),
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AppColors.green,
+                                                  ),
+                                                ),
+                                              ),
+                                              // Stock
+                                              Expanded(
+                                                flex: 2,
+                                                child: Text(
+                                                  '${p.stockQuantity.toStringAsFixed(0)} ${p.unit}',
+                                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                                                ),
+                                              ),
+                                              // Status
+                                              Expanded(
+                                                flex: 2,
+                                                child: Text(
+                                                  stockLabel,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: stockColor,
+                                                  ),
+                                                ),
+                                              ),
+                                              // Active — fixed, next to actions
+                                              SizedBox(
+                                                width: 72,
+                                                child: Text(
+                                                  p.isActive ? 'Active' : 'Inactive',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: p.isActive ? AppColors.green : Colors.grey.shade600,
+                                                  ),
+                                                ),
+                                              ),
+                                              // Actions — tight to Active
+                                              SizedBox(
+                                                width: 84,
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.end,
+                                                  children: [
+                                                    IconButton(
+                                                      tooltip: 'Edit',
+                                                      onPressed: () => _addEdit(p),
+                                                      visualDensity: VisualDensity.compact,
+                                                      padding: EdgeInsets.zero,
+                                                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                                      icon: Icon(Icons.edit_outlined, size: 20, color: Colors.grey.shade700),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    IconButton(
+                                                      tooltip: 'Delete',
+                                                      onPressed: () => _deleteProduct(p),
+                                                      visualDensity: VisualDensity.compact,
+                                                      padding: EdgeInsets.zero,
+                                                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                                      icon: Icon(Icons.delete_outline, size: 20, color: Colors.red.shade400),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ],
                                           ),
                                         ),
                                       );
                                     },
+                                  ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                     ),

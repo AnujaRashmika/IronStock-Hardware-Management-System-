@@ -127,7 +127,7 @@ class _SuppliersScreenState extends State<SuppliersScreen> {
                           decoration: const InputDecoration(
                             labelText: 'Phone',
                             prefixIcon: Icon(Icons.phone_outlined),
-                            helperText: 'Exactly 10 digits',
+                            counterText: '',
                           ),
                           keyboardType: TextInputType.phone,
                           maxLength: 10,

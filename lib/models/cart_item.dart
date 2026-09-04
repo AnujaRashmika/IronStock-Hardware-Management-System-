@@ -4,7 +4,7 @@ class CartItem {
   final String unit;
   final double unitPrice;
   double quantity;
-  double discount;
+  double discount; // total line discount amount (unit discount × qty)
 
   CartItem({
     required this.productId,
@@ -15,5 +15,9 @@ class CartItem {
     this.discount = 0,
   });
 
-  double get lineTotal => (unitPrice * quantity) - discount;
+  /// Full price before discount (shown on cart line right side).
+  double get lineGross => unitPrice * quantity;
+
+  /// Net after line discount (used when computing order totals).
+  double get lineNet => lineGross - discount;
 }

@@ -5,8 +5,12 @@ import '../../core/utils/currency_utils.dart';
 import '../../repositories/dashboard_repository.dart';
 import '../../app/app.dart';
 import '../../widgets/app_header.dart';
+import '../../screens/delivery/delivery_screen.dart';
+import '../../screens/returns/returns_screen.dart';
+import '../../screens/warranty/warranty_screen.dart';
 import '../../core/database/database_helper.dart';
 import '../../core/constants/db_constants.dart';
+import '../inventory/inventory_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -19,6 +23,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, dynamic>? stats;
   List<Map<String, dynamic>> recent = [];
   List<double> weekSales = List.filled(7, 0);
+  List<double> monthSales = List.filled(12, 0);
+  String chartMode = 'week'; // week | month
   bool loading = true;
 
   @override
@@ -32,6 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     stats = await _repo.getStats();
     recent = await _repo.recentSales();
     weekSales = await _loadWeekChart();
+    monthSales = await _loadMonthChart();
     setState(() => loading = false);
   }
 
@@ -52,13 +59,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return result;
   }
 
+  Future<List<double>> _loadMonthChart() async {
+    final db = await DatabaseHelper.instance.database;
+    final result = List<double>.filled(12, 0);
+    final now = DateTime.now();
+    for (int i = 11; i >= 0; i--) {
+      final monthDate = DateTime(now.year, now.month - i, 1);
+      final start = DateTime(monthDate.year, monthDate.month, 1);
+      final end = DateTime(monthDate.year, monthDate.month + 1, 0, 23, 59, 59);
+      final r = await db.rawQuery(
+        'SELECT COALESCE(SUM(total),0) as t FROM ${DbConstants.sales} WHERE created_at BETWEEN ? AND ?',
+        [start.toIso8601String(), end.toIso8601String()],
+      );
+      result[11 - i] = (r.first['t'] as num).toDouble();
+    }
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final s = stats!;
-    final maxY = weekSales.fold<double>(0, (a, b) => a > b ? a : b);
+    final series = chartMode == 'week' ? weekSales : monthSales;
+    final maxY = series.fold<double>(0, (a, b) => a > b ? a : b);
     final chartMax = maxY <= 0 ? 1000.0 : maxY * 1.2;
 
     return Column(
@@ -84,22 +109,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _kpi(cardW, 'Today\'s Sales', CurrencyUtils.format(s['todaySales']), Icons.point_of_sale_outlined, AppColors.green),
                   _kpi(cardW, 'Today\'s Purchases', CurrencyUtils.format(s['todayPurchases']), Icons.shopping_cart_outlined, AppColors.blue),
                   _kpi(cardW, 'Today\'s Profit', CurrencyUtils.format(s['todayProfit']), Icons.trending_up, AppColors.teal),
-                  _kpi(cardW, 'Pending Payments', CurrencyUtils.format(s['pendingPayments']), Icons.account_balance_wallet_outlined, AppColors.orange),
+                  _kpiTap(cardW, 'Pending Returns', '${s['pendingReturns']}', Icons.assignment_return_outlined, AppColors.orange, () {
+                    ReturnsScreen.pendingStatusFilter = 'pending';
+                    MainLayout.of(context)?.navigateTo(AppPages.returns);
+                  }),
                 ],
               );
             }),
             const SizedBox(height: 16),
             LayoutBuilder(builder: (context, constraints) {
               final w = constraints.maxWidth;
-              final cardW = w > 700 ? (w - 48) / 4 : (w - 16) / 2;
+              // Larger alert cards (3 across when wide)
+              final cardW = w > 700 ? (w - 40) / 3 : (w - 16) / 2;
               return Wrap(
-                spacing: 16,
-                runSpacing: 16,
+                spacing: 20,
+                runSpacing: 18,
                 children: [
-                  _alert(cardW, 'Low Stock', '${s['lowStock']}', Icons.warning_amber_rounded, AppColors.red, AppPages.inventory),
-                  _alert(cardW, 'Pending Deliveries', '${s['pendingDeliveries']}', Icons.local_shipping_outlined, AppColors.purple, AppPages.delivery),
-                  _alert(cardW, 'Pending Returns', '${s['pendingReturns']}', Icons.assignment_return_outlined, AppColors.orange, AppPages.returns),
-                  _alert(cardW, 'Warranty Claims', '${s['warrantyClaims']}', Icons.verified_outlined, AppColors.indigo, AppPages.warranty),
+                  _alert(cardW, 'Low Stock', '${s['lowStock']}', Icons.warning_amber_rounded, AppColors.red, () {
+                    // set via InventoryProvider in build — use static bridge
+                    InventoryScreen.bridgeFilter = 'Low Stock';
+                    MainLayout.of(context)?.navigateTo(AppPages.inventory);
+                  }),
+                  _alert(cardW, 'Pending Deliveries', '${s['pendingDeliveries']}', Icons.local_shipping_outlined, AppColors.purple, () {
+                    DeliveryScreen.pendingStatusFilter = 'Pending';
+                    MainLayout.of(context)?.navigateTo(AppPages.delivery);
+                  }),
+                  _alert(cardW, 'Warranty Claims', '${s['warrantyClaims']}', Icons.verified_outlined, AppColors.indigo, () {
+                    WarrantyScreen.openClaimsTab = true;
+                    MainLayout.of(context)?.navigateTo(AppPages.warranty);
+                  }),
                 ],
               );
             }),
@@ -113,65 +151,139 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Sales — Last 7 Days', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              chartMode == 'week' ? 'Sales — Last 7 Days' : 'Sales — Last 12 Months',
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          SegmentedButton<String>(
+                            segments: const [
+                              ButtonSegment(value: 'week', label: Text('7 Days'), icon: Icon(Icons.bar_chart, size: 16)),
+                              ButtonSegment(value: 'month', label: Text('Monthly'), icon: Icon(Icons.show_chart, size: 16)),
+                            ],
+                            selected: {chartMode},
+                            onSelectionChanged: (s) => setState(() => chartMode = s.first),
+                            style: ButtonStyle(
+                              visualDensity: VisualDensity.compact,
+                              textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 12)),
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 16),
                       SizedBox(
                         height: 200,
-                        child: BarChart(
-                          BarChartData(
-                            maxY: chartMax,
-                            gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: chartMax / 4),
-                            borderData: FlBorderData(show: false),
-                            titlesData: FlTitlesData(
-                              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              leftTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  reservedSize: 42,
-                                  getTitlesWidget: (v, _) => Text(
-                                    v >= 1000 ? '${(v / 1000).toStringAsFixed(0)}k' : v.toStringAsFixed(0),
-                                    style: const TextStyle(fontSize: 10),
+                        child: chartMode == 'week'
+                            ? BarChart(
+                                BarChartData(
+                                  maxY: chartMax,
+                                  gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: chartMax / 4),
+                                  borderData: FlBorderData(show: false),
+                                  titlesData: FlTitlesData(
+                                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                    leftTitles: AxisTitles(
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        reservedSize: 42,
+                                        getTitlesWidget: (v, _) => Text(
+                                          v >= 1000 ? '${(v / 1000).toStringAsFixed(0)}k' : v.toStringAsFixed(0),
+                                          style: const TextStyle(fontSize: 10),
+                                        ),
+                                      ),
+                                    ),
+                                    bottomTitles: AxisTitles(
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        getTitlesWidget: (v, _) {
+                                          final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                                          final i = v.toInt();
+                                          if (i < 0 || i > 6) return const SizedBox();
+                                          return Padding(
+                                            padding: const EdgeInsets.only(top: 6),
+                                            child: Text(days[i], style: const TextStyle(fontSize: 11)),
+                                          );
+                                        },
+                                      ),
+                                    ),
                                   ),
+                                  barGroups: List.generate(7, (i) {
+                                    return BarChartGroupData(
+                                      x: i,
+                                      barRods: [
+                                        BarChartRodData(
+                                          toY: weekSales[i],
+                                          width: 18,
+                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                                          color: AppTheme.primaryColor,
+                                        ),
+                                      ],
+                                    );
+                                  }),
+                                ),
+                              )
+                            : LineChart(
+                                LineChartData(
+                                  maxY: chartMax,
+                                  minY: 0,
+                                  gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: chartMax / 4),
+                                  borderData: FlBorderData(show: false),
+                                  titlesData: FlTitlesData(
+                                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                    leftTitles: AxisTitles(
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        reservedSize: 42,
+                                        getTitlesWidget: (v, _) => Text(
+                                          v >= 1000 ? '${(v / 1000).toStringAsFixed(0)}k' : v.toStringAsFixed(0),
+                                          style: const TextStyle(fontSize: 10),
+                                        ),
+                                      ),
+                                    ),
+                                    bottomTitles: AxisTitles(
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        interval: 1,
+                                        getTitlesWidget: (v, _) {
+                                          const labels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+                                          // last 12 months ending current month
+                                          final now = DateTime.now();
+                                          final i = v.toInt();
+                                          if (i < 0 || i > 11) return const SizedBox();
+                                          final m = DateTime(now.year, now.month - (11 - i), 1).month - 1;
+                                          return Padding(
+                                            padding: const EdgeInsets.only(top: 6),
+                                            child: Text(labels[m], style: const TextStyle(fontSize: 10)),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  lineBarsData: [
+                                    LineChartBarData(
+                                      spots: List.generate(12, (i) => FlSpot(i.toDouble(), monthSales[i])),
+                                      isCurved: true,
+                                      color: AppTheme.primaryColor,
+                                      barWidth: 3,
+                                      dotData: const FlDotData(show: true),
+                                      belowBarData: BarAreaData(
+                                        show: true,
+                                        color: AppTheme.primaryColor.withOpacity(0.12),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              bottomTitles: AxisTitles(
-                                sideTitles: SideTitles(
-                                  showTitles: true,
-                                  getTitlesWidget: (v, _) {
-                                    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                                    final now = DateTime.now();
-                                    final labels = List.generate(7, (i) {
-                                      final d = now.subtract(Duration(days: 6 - i));
-                                      return days[d.weekday - 1];
-                                    });
-                                    final i = v.toInt();
-                                    if (i < 0 || i > 6) return const SizedBox();
-                                    return Text(labels[i], style: const TextStyle(fontSize: 11));
-                                  },
-                                ),
-                              ),
-                            ),
-                            barGroups: List.generate(7, (i) {
-                              return BarChartGroupData(
-                                x: i,
-                                barRods: [
-                                  BarChartRodData(
-                                    toY: weekSales[i],
-                                    width: 18,
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                ],
-                              );
-                            }),
-                          ),
-                        ),
                       ),
                     ],
                   ),
                 ),
               );
+
               final recentCard = Card(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -246,19 +358,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _alert(double width, String title, String value, IconData icon, Color color, int page) {
+  Widget _kpiTap(double width, String title, String value, IconData icon, Color color, VoidCallback onTap) {
     return SizedBox(
       width: width,
       child: Card(
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => MainLayout.of(context)?.navigateTo(page),
+          onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: AppColors.softOf(color), borderRadius: BorderRadius.circular(10)),
+                  child: Icon(icon, color: color, size: 20),
+                ),
+                const SizedBox(height: 12),
+                Text(title, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                const SizedBox(height: 4),
+                Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _alert(double width, String title, String value, IconData icon, Color color, VoidCallback onTap) {
+    return SizedBox(
+      width: width,
+      child: Card(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             child: Row(
               children: [
-                Icon(icon, color: color, size: 22),
-                const SizedBox(width: 12),
+                Icon(icon, color: color, size: 28),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

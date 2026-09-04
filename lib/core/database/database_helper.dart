@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -16,14 +17,36 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDb() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final path = join(dir.path, DbConstants.databaseName);
+    // Prefer Application Support (stable on Windows .exe); fall back to Documents.
+    Directory dir;
+    try {
+      dir = await getApplicationSupportDirectory();
+    } catch (_) {
+      dir = await getApplicationDocumentsDirectory();
+    }
+    // Dedicated subfolder so DB is not mixed with other app files
+    final dbDir = Directory(join(dir.path, 'HardwareStoreData'));
+    if (!await dbDir.exists()) {
+      await dbDir.create(recursive: true);
+    }
+    final path = join(dbDir.path, DbConstants.databaseName);
     return openDatabase(
       path,
       version: DbConstants.databaseVersion,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
+      onOpen: _onOpen,
     );
+  }
+
+  /// Guard: if DB file opened but core tables missing, create schema once.
+  Future<void> _onOpen(Database db) async {
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+    );
+    if (tables.isEmpty) {
+      await _onCreate(db, DbConstants.databaseVersion);
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {

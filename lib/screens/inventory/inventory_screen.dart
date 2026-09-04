@@ -10,6 +10,8 @@ import '../../widgets/app_header.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
+  /// Dashboard → inventory filter bridge
+  static String? bridgeFilter;
 
   @override
   State<InventoryScreen> createState() => _InventoryScreenState();
@@ -24,8 +26,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final inv = context.read<InventoryProvider>();
-      if (inv.pendingFilter != null) {
-        setState(() => _filter = inv.pendingFilter!);
+      final bridge = InventoryScreen.bridgeFilter ?? inv.pendingFilter;
+      if (bridge != null) {
+        setState(() => _filter = bridge);
+        InventoryScreen.bridgeFilter = null;
         inv.pendingFilter = null;
       }
       inv.loadInventory();

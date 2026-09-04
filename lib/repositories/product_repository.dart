@@ -19,7 +19,7 @@ class ProductRepository {
     final db = await _db.database;
     final rows = await db.query(
       DbConstants.products,
-      where: 'is_active = 1 AND (name LIKE ? OR sku LIKE ? OR barcode LIKE ? OR brand LIKE ?)',
+      where: 'name LIKE ? OR sku LIKE ? OR barcode LIKE ? OR brand LIKE ?',
       whereArgs: ['%$q%', '%$q%', '%$q%', '%$q%'],
       orderBy: 'name ASC',
     );
@@ -46,6 +46,11 @@ class ProductRepository {
   Future<int> delete(int id) async {
     final db = await _db.database;
     return db.update(DbConstants.products, {'is_active': 0}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> hardDelete(int id) async {
+    final db = await _db.database;
+    return db.delete(DbConstants.products, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Product>> lowStock() async {

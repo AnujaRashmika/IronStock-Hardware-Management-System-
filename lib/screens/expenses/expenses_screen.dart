@@ -43,7 +43,18 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     String? catName = _cats.isNotEmpty ? _cats.first['name'] as String : null;
     final ok = await showDialog<bool>(context: context, builder: (ctx) => StatefulBuilder(builder: (ctx, setS) {
       final isDark = Theme.of(ctx).brightness == Brightness.dark;
-      void save() => Navigator.pop(ctx, true);
+      void save() {
+        final a = double.tryParse(amount.text.trim());
+        if (a == null || a <= 0) {
+          showErrorSnackBar(context, 'Amount is required');
+          return;
+        }
+        if (title.text.trim().isEmpty) {
+          showErrorSnackBar(context, 'Title is required');
+          return;
+        }
+        Navigator.pop(ctx, true);
+      }
       return CallbackShortcuts(
         bindings: {
           const SingleActivator(LogicalKeyboardKey.enter): save,

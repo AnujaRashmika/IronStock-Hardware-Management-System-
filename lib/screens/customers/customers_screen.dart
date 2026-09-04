@@ -295,8 +295,15 @@ class _CustomersScreenState extends State<CustomersScreen> {
                             labelText: 'Mobile Number',
                             hintText: '07XXXXXXXX',
                             prefixIcon: Icon(Icons.phone_outlined),
+                            counterText: '',
                           ),
                           keyboardType: TextInputType.phone,
+                          maxLength: 10,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
+                          validator: AppValidators.mobileOptional,
                         ),
                         const SizedBox(height: 22),
                         Row(

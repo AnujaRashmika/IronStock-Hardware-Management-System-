@@ -30,7 +30,7 @@ class SaleRepository {
   }) async {
     final db = await _db.database;
     final invoiceNo = await nextInvoiceNo();
-    final subtotal = items.fold<double>(0, (s, i) => s + i.lineTotal);
+    final subtotal = items.fold<double>(0, (s, i) => s + i.lineGross);
     final total = subtotal - discount + tax + deliveryCharge;
     final balance = total - paidAmount;
     final now = DateTime.now().toIso8601String();
@@ -64,7 +64,7 @@ class SaleRepository {
           'quantity': item.quantity,
           'unit_price': item.unitPrice,
           'discount': item.discount,
-          'total': item.lineTotal,
+          'total': item.lineNet,
         });
       }
 

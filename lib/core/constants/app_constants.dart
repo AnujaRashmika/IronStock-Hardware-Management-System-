@@ -17,7 +17,6 @@ class AppConstants {
     'Pending', 'Scheduled', 'Out for Delivery', 'Delivered', 'Cancelled', 'Failed'
   ];
   static const List<String> warrantyClaimStatuses = [
-    'Pending', 'Received', 'Under Inspection', 'Sent to Supplier',
-    'Repairing', 'Replaced', 'Completed', 'Rejected'
+    'Pending', 'Completed', 'Rejected'
   ];
 }
